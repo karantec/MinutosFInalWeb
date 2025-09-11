@@ -288,7 +288,7 @@ const Header = () => {
             <div className="flex items-center space-x-1 sm:space-x-4">
               {/* Location on Mobile */}
               <div className="md:hidden flex items-center text-gray-700 px-2 py-1 text-sm">
-                <span className="font-medium max-w-[100px] truncate">
+                <span className="font-medium max-w-[180px] sm:max-w-[240px] truncate">
                   {locationLoading ? (
                     <span className="flex items-center">
                       <FaSpinner className="animate-spin w-3 h-3 mr-1" />
