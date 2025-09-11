@@ -67,16 +67,16 @@ const DiscountOffers = () => {
 
   return (
     <section>
-      <h3 className="font-semibold text-2xl my-6 mx-4">
+      {/* <h3 className="font-semibold text-2xl my-6 mx-4">
         Bank &amp; Wallet Offers
-      </h3>
-      <div className="mx-4 relative">
+      </h3> */}
+      {/* <div className="mx-4 relative">
         <div className="flex overflow-x-auto no-scrollbar">
           {allOffers?.map((offer, i) => (
             <DiscountCard key={i} data={offer} />
           ))}
         </div>
-      </div>
+      </div> */}
     </section>
   );
 };

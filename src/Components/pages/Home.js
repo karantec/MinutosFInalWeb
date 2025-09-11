@@ -3,7 +3,6 @@ import HeroArea from "../home/HeroArea";
 import FeaturedPromo from "../home/FeaturedPromo";
 import CategoriesList from "../home/CategoriesList";
 import DiscountOffers from "../home/DiscountOffers";
-import HighlightedPromo from "../home/HighlightedPromo";
 import ProductsRow from "../home/ProductsRow";
 const Home = () => {
   const productItems = Misc.filter((item) => item.type === 77).map((el) => ({
@@ -17,7 +16,7 @@ const Home = () => {
       <FeaturedPromo />
       <CategoriesList />
       <DiscountOffers />
-      <HighlightedPromo />
+      {/* <HighlightedPromo /> */}
       {productItems.map((products, i) => (
         <ProductsRow key={i} {...products} />
       ))}

@@ -1,3 +1,5 @@
+import HeroArea from "./HeroArea";
+
 const ProductsRow = ({ data, objects }) => {
   const products = objects.map((obj) =>
     obj.data.products.map((product) => product[0])
@@ -20,10 +22,11 @@ const ProductsRow = ({ data, objects }) => {
     return chunks;
   };
 
-  const productRows = chunkProducts(products, 3);
+  const productRows = chunkProducts(products, 4);
 
   return (
     <section className="px-4 py-4 bg-gray-50">
+      <HeroArea />
       {data.show_header && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">

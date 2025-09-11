@@ -2,13 +2,8 @@ const HeroArea = () => {
   const ads = [
     {
       id: 1,
-      banner: 'ad-1.png',
-      banner_sm: 'ad-small-1.png',
-    },
-    {
-      id: 2,
-      banner: 'ad-2.png',
-      banner_sm: 'ad-small-2.png',
+      banner: "ad-1.png",
+      banner_sm: "ad-small-1.png",
     },
   ];
 
