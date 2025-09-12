@@ -38,7 +38,7 @@ const ProductsRow = ({ data, objects }) => {
             )}
           </div>
           {data.subtitle && (
-            <p className="text-gray-600 text-sm">{data.subtitle}</p>
+            <p className="text-gray-600 text-md">{data.subtitle}</p>
           )}
         </div>
       )}

@@ -65,7 +65,7 @@ const CategoriesList = () => {
             className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
           >
             <div className="aspect-square mb-2 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
-              <Link to="/subCategory">
+              <Link to={`/subCategory/${encodeURIComponent(category.name)}`}>
                 {category.image ? (
                   <img
                     src={category.image}

@@ -1034,7 +1034,7 @@
       "bg_color": "#ffffff",
       "show_header": true,
       "show_button": true,
-      "button_text": "see all"
+      "button_text": "See all"
     },
     "type": 77,
     "variation_id": "",
@@ -1055,7 +1055,7 @@
           },
           "show_view_all": true,
           "should_display_atc_button": true,
-          "title_action": "see all",
+          "title_action": "See all",
           "card_type": 5,
           "products": [
             [
@@ -2157,7 +2157,7 @@
       "title": "Chemist store",
       "collection_name": null,
       "title_img_url": null,
-      "title_action": "see all",
+      "title_action": "See all",
       "show_view_all": true,
       "theme": "LIGHT",
       "is_for_gifting": false,
@@ -2196,7 +2196,7 @@
       "bg_color": "#ffffff",
       "show_header": true,
       "show_button": true,
-      "button_text": "see all"
+      "button_text": "See all"
     },
     "type": 77,
     "variation_id": "",
@@ -2217,7 +2217,7 @@
           },
           "show_view_all": true,
           "should_display_atc_button": true,
-          "title_action": "see all",
+          "title_action": "See all",
           "card_type": 5,
           "products": [
             [
@@ -3318,7 +3318,7 @@
       "title": "Breakfast & dairy",
       "collection_name": null,
       "title_img_url": null,
-      "title_action": "see all",
+      "title_action": "See all",
       "show_view_all": true,
       "theme": "LIGHT",
       "is_for_gifting": false,
@@ -3357,7 +3357,7 @@
       "bg_color": "#ffffff",
       "show_header": true,
       "show_button": true,
-      "button_text": "see all"
+      "button_text": "See all"
     },
     
     "type": 77,
@@ -3379,7 +3379,7 @@
           },
           "show_view_all": true,
           "should_display_atc_button": true,
-          "title_action": "see all",
+          "title_action": "See all",
           "card_type": 5,
           "products": [
             [
@@ -4480,7 +4480,7 @@
       "title": "Biscuits, snacks & chocolates",
       "collection_name": null,
       "title_img_url": null,
-      "title_action": "see all",
+      "title_action": "See all",
       "show_view_all": true,
       "theme": "LIGHT",
       "is_for_gifting": false,

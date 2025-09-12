@@ -14,7 +14,10 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/profile" element={<SettingsPage />} />
-        <Route path="/subCategory" element={<FruitsVegetablesComponent />} />]
+        <Route
+          path="/subCategory/:categoryName"
+          element={<FruitsVegetablesComponent />}
+        />
       </Routes>
 
       <Footer />

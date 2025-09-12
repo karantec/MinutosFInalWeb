@@ -337,11 +337,11 @@ const Header = () => {
           )}
 
           {/* Desktop Categories */}
-          <div className="hidden md:flex items-center relative h-12">
+          <div className="hidden md:flex items-center justify-center relative h-12">
             {/* Left Arrow */}
 
             {/* Scrollable categories — show only ~6 at a time */}
-            <div className="flex items-center gap-6 h-12 overflow-x-auto scrollbar-hide px-8 w-full max-w-5xl">
+            <div className="flex items-center gap-6 h-12 overflow-x-auto scrollbar-hide px-8 max-w-5xl mx-auto">
               {categoriesLoading ? (
                 <div className="flex items-center gap-2 text-gray-500">
                   <FaSpinner className="animate-spin w-4 h-4" />
@@ -377,8 +377,9 @@ const Header = () => {
 
             {/* Right Arrow */}
           </div>
+
           {/* Mobile Categories */}
-          <div className="md:hidden flex items-center gap-4 h-16 overflow-x-auto scrollbar-hide px-1">
+          <div className="hidden flex items-center gap-4 h-16 overflow-x-auto scrollbar-hide px-1">
             {categoriesLoading ? (
               <div className="flex items-center gap-2 text-gray-500 px-4">
                 <FaSpinner className="animate-spin w-4 h-4" />
