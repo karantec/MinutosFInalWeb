@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star } from "lucide-react";
+import { Star, Search } from "lucide-react";
 import { useParams } from "react-router-dom";
 import subcategoryService from "../service/subcategoryService";
 
@@ -10,6 +10,7 @@ const FruitsVegetablesComponent = () => {
     _id: "All",
     name: "All",
   });
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchSubCategories = async () => {
@@ -56,12 +57,44 @@ const FruitsVegetablesComponent = () => {
       category: "Fresh Fruits",
       image: "https://via.placeholder.com/150",
     },
+    {
+      id: 3,
+      name: "Apple",
+      price: 120,
+      originalPrice: 150,
+      savings: 30,
+      weight: "1 kg",
+      rating: 4.8,
+      reviews: "120.5k",
+      category: "Fresh Fruits",
+      image: "https://via.placeholder.com/150",
+    },
+    {
+      id: 4,
+      name: "Tomato",
+      price: 40,
+      originalPrice: 50,
+      savings: 10,
+      weight: "1 kg",
+      rating: 4.2,
+      reviews: "95.3k",
+      category: "Fresh Vegetables",
+      image: "https://via.placeholder.com/150",
+    },
   ];
 
-  const filteredProducts =
-    selectedCategory._id === "All"
-      ? products
-      : products.filter((p) => p.category === selectedCategory.name);
+  // Filter products based on selected category and search query
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      selectedCategory._id === "All" ||
+      product.category === selectedCategory.name;
+
+    const matchesSearch =
+      searchQuery === "" ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesCategory && matchesSearch;
+  });
 
   const ProductCard = ({ product }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition-all duration-200">
@@ -118,59 +151,62 @@ const FruitsVegetablesComponent = () => {
           Fresh {categoryName}
         </h1>
 
+        {/* Search Filter */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
         <div className="flex gap-6">
-          {/* Sidebar (Desktop) */}
-          {/* <div className="hidden lg:block w-64 space-y-2">
-            {subCategories.map((sub) => (
-              <button
-                key={sub._id}
-                onClick={() => setSelectedCategory(sub)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                  selectedCategory._id === sub._id
-                    ? "bg-purple-50 text-purple-700 font-semibold border-2 border-purple-200 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50 border-2 border-transparent"
-                }`}
-              >
-                <span className="text-sm">{sub.name}</span>
-              </button>
-            ))}
-          </div> */}
-
-          {/* Main Content */}
-
-          <div className="flex gap-6">
-            {/* Sidebar - Now shows vertically on all screen sizes including mobile */}
-            <div className="w-20 sm:w-20 md:w-48 lg:w-64 flex-shrink-0">
-              <div className="space-y-4">
-                {subCategories.map((sub) => (
-                  <button
-                    key={sub._id}
-                    onClick={() => setSelectedCategory(sub)}
-                    className={`w-full flex flex-col sm:flex-row items-center gap-2 sm:gap-3 px-2 sm:px-4 py-3 rounded-xl text-center sm:text-left transition-all duration-200 ${
-                      selectedCategory._id === sub._id
-                        ? "bg-purple-50 text-purple-700 font-semibold border-2 border-purple-200 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50 border-2 border-transparent"
-                    }`}
-                  >
-                    <div className="w-8 h-8 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {sub.image && (
-                        <img
-                          src={sub.image}
-                          alt={sub.name}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      )}
-                    </div>
-                    <span className="text-xs sm:text-sm font-medium leading-tight">
-                      {sub.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
+          {/* Sidebar */}
+          <div className="w-20 sm:w-20 md:w-48 lg:w-64 flex-shrink-0">
+            <div className="space-y-4">
+              {subCategories.map((sub) => (
+                <button
+                  key={sub._id}
+                  onClick={() => setSelectedCategory(sub)}
+                  className={`w-full flex flex-col sm:flex-row items-center gap-2 sm:gap-3 px-2 sm:px-4 py-3 rounded-xl text-center sm:text-left transition-all duration-200 ${
+                    selectedCategory._id === sub._id
+                      ? "bg-purple-50 text-purple-700 font-semibold border-2 border-purple-200 shadow-sm"
+                      : "text-gray-700 hover:bg-gray-50 border-2 border-transparent"
+                  }`}
+                >
+                  <div className="w-8 h-8 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {sub.image && (
+                      <img
+                        src={sub.image}
+                        alt={sub.name}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    )}
+                  </div>
+                  <span className="text-xs sm:text-sm font-medium leading-tight">
+                    {sub.name}
+                  </span>
+                </button>
+              ))}
             </div>
-            {/* Products */}
-            <div className="flex-1 min-w-0">
-              {/* Products Grid */}
+          </div>
+
+          {/* Products */}
+          <div className="flex-1 min-w-0">
+            {/* Results count */}
+            <div className="mb-4 text-sm text-gray-600">
+              {filteredProducts.length} product
+              {filteredProducts.length !== 1 ? "s" : ""} found
+              {searchQuery && ` for "${searchQuery}"`}
+            </div>
+
+            {/* Products Grid */}
+            {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {filteredProducts.map((product) => (
                   <div key={product.id} className="h-64">
@@ -178,7 +214,27 @@ const FruitsVegetablesComponent = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="text-gray-400 mb-4">
+                  <Search className="w-16 h-16 mx-auto" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No products found
+                </h3>
+                <p className="text-gray-500">
+                  Try adjusting your search or filter criteria
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -5,6 +5,8 @@ import {
   FaSearch,
   FaTimes,
   FaSpinner,
+  FaMapMarkerAlt,
+  FaChevronDown,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { locationService } from "../service/locationService";
@@ -13,6 +15,7 @@ import { categoryService } from "../service/categoryService";
 const Header = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState(null);
@@ -20,6 +23,21 @@ const Header = () => {
     "Detecting location..."
   );
   const [locationLoading, setLocationLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState([
+    {
+      id: 1,
+      name: "Home",
+      address: "123 Main Street, Apartment 4B, New York, NY 10001",
+      type: "home",
+    },
+    {
+      id: 2,
+      name: "Work",
+      address: "456 Office Park, Building C, New York, NY 10002",
+      type: "work",
+    },
+  ]);
 
   // Default category icons mapping
   const getCategoryIcon = (categoryName) => {
@@ -123,7 +141,281 @@ const Header = () => {
   );
 
   return (
-    <div className="bg-white sticky top-0 z-50 shadow-sm">
+    <>
+      {/* Top Banner */}
+      <div className="hidden sm:block bg-red-700 text-white text-center py-1.5 px-2">
+        <p className="text-xs sm:text-sm">
+          Get Cigarettes at <span className="font-bold">₹0</span> Convenience
+          Fee
+          <span className="hidden sm:inline">
+            {" "}
+            • Get smoking accessories, fresheners & more in minutes!
+          </span>
+        </p>
+      </div>
+
+      {/* Main Header */}
+      <header className="bg-white border-b border-gray-200 hidden md:block">
+        <div className="px-3 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Left Section - Logo */}
+            <div className="flex items-center space-x-2 sm:space-x-6">
+              <Link to="/">
+                <span className="text-xl sm:text-2xl font-bold text-red-600 tracking-tight">
+                  minutos
+                </span>
+              </Link>
+              <div className="hidden sm:block">
+                <span className="bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-xs font-semibold uppercase">
+                  EXPRESS DELIVERY
+                </span>
+              </div>
+            </div>
+
+            {/* Center Section - Location & Search (Desktop) */}
+            <div className="flex items-center space-x-4 flex-1 max-w-2xl mx-4">
+              {/* Location */}
+              <div className="min-w-fit">
+                <button
+                  className="flex items-center space-x-2 text-gray-700 px-3 py-2 hover:text-red-600"
+                  onClick={() => setIsLocationPopupOpen(true)}
+                >
+                  <FaMapMarkerAlt className="text-red-600" />
+                  <span className="text-sm font-medium whitespace-nowrap max-w-[160px] truncate">
+                    {locationLoading ? (
+                      <span className="flex items-center">
+                        <FaSpinner className="animate-spin w-3 h-3 mr-1" />
+                        Detecting...
+                      </span>
+                    ) : (
+                      selectedLocation
+                    )}
+                  </span>
+                  <FaChevronDown className="text-gray-400 text-xs" />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <FaSearch className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder='Search for "cheese slices"'
+                    className="w-full pl-12 pr-4 py-2.5 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none text-sm transition-all"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Section */}
+            <div className="flex items-center space-x-1 sm:space-x-4">
+              {/* COD Badge */}
+              <div className="hidden lg:block">
+                <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-semibold">
+                  COD
+                </span>
+              </div>
+
+              {/* Cart */}
+              <button
+                className="flex items-center p-2 text-gray-700 hover:text-red-600 relative"
+                onClick={() => setIsCartOpen(true)}
+              >
+                <FaShoppingCart className="w-5 h-5" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
+                    {cartItems.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Profile */}
+              <Link
+                to="/profile"
+                className="p-2 text-gray-700 hover:text-red-600"
+              >
+                <FaRegUser className="w-5 h-5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Navigation */}
+        <nav className="bg-white border-b border-gray-100">
+          <div className="px-3 sm:px-4 lg:px-6">
+            {categoriesError && !categoriesLoading && (
+              <div className="text-center py-2">
+                <p className="text-sm text-red-600">
+                  Failed to load categories. Using default categories.
+                </p>
+              </div>
+            )}
+
+            {/* Desktop Categories */}
+            <div className="flex items-center justify-center relative h-12">
+              {/* Scrollable categories — show only ~6 at a time */}
+              <div className="flex items-center gap-6 h-12 overflow-x-auto scrollbar-hide px-8 max-w-5xl mx-auto">
+                {categoriesLoading ? (
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <FaSpinner className="animate-spin w-4 h-4" />
+                    <span className="text-sm">Loading categories...</span>
+                  </div>
+                ) : (
+                  categories.map((category) => (
+                    <button
+                      key={category._id}
+                      className={`flex-shrink-0 flex items-center gap-2 whitespace-nowrap pb-2 min-w-[120px] ${
+                        activeCategory === category.name
+                          ? "text-red-600 font-medium border-b-2 border-red-600"
+                          : "text-gray-600 hover:text-red-600"
+                      }`}
+                      onClick={() => handleCategorySelect(category.name)}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded flex items-center justify-center ${
+                          activeCategory === category.name
+                            ? "bg-red-100"
+                            : "bg-gray-100"
+                        }`}
+                      >
+                        <span className="text-xs">
+                          {getCategoryIcon(category.name)}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {category.name}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+      </header>
+
+      {/* Location Popup */}
+      {isLocationPopupOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Select Location</h2>
+              <button
+                onClick={() => setIsLocationPopupOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <FaTimes className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="p-4 border-b">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search for area, street name..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-y-auto max-h-[50vh]">
+              <div className="p-4">
+                <h3 className="font-medium text-gray-700 mb-3">
+                  Saved Addresses
+                </h3>
+                <div className="space-y-3">
+                  {savedAddresses.map((address) => (
+                    <div
+                      key={address.id}
+                      className="flex items-start p-3 border rounded-lg cursor-pointer hover:border-red-500"
+                      onClick={() => {
+                        setSelectedLocation(address.address);
+                        setIsLocationPopupOpen(false);
+                      }}
+                    >
+                      <div className="flex-shrink-0 mt-1">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            address.type === "home"
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-purple-100 text-purple-600"
+                          }`}
+                        >
+                          {address.type === "home" ? "🏠" : "💼"}
+                        </div>
+                      </div>
+                      <div className="ml-3">
+                        <h4 className="font-medium">{address.name}</h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {address.address}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 border-t">
+                <h3 className="font-medium text-gray-700 mb-3">
+                  Detect Current Location
+                </h3>
+                <button
+                  className="w-full flex items-center p-3 border rounded-lg hover:border-red-500"
+                  onClick={async () => {
+                    setLocationLoading(true);
+                    setIsLocationPopupOpen(false);
+                    try {
+                      const result =
+                        await locationService.getUserLocationWithAddress();
+                      if (result.success && result.location) {
+                        let locationString =
+                          result.location.address?.formatted ||
+                          result.location.address?.full ||
+                          "Current Location";
+                        setSelectedLocation(locationString);
+                        locationService.saveLocationToStorage(locationString);
+                      } else {
+                        setSelectedLocation("Location not available");
+                      }
+                    } catch (error) {
+                      setSelectedLocation("Location not available");
+                    } finally {
+                      setLocationLoading(false);
+                    }
+                  }}
+                >
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <FaMapMarkerAlt className="text-red-600" />
+                    </div>
+                  </div>
+                  <div className="ml-3 text-left">
+                    <h4 className="font-medium">Use current location</h4>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Enabled location permission required
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 border-t">
+              <button className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors">
+                Add New Address
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cart Sidebar */}
       <div
         className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
@@ -193,221 +485,15 @@ const Header = () => {
       </div>
 
       {/* Overlay */}
-      {isCartOpen && (
+      {(isCartOpen || isLocationPopupOpen) && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsCartOpen(false)}
+          onClick={() => {
+            setIsCartOpen(false);
+            setIsLocationPopupOpen(false);
+          }}
         ></div>
       )}
-
-      {/* Top Banner */}
-      <div className="hidden sm:block bg-red-700 text-white text-center py-1.5 px-2">
-        <p className="text-xs sm:text-sm">
-          Get Cigarettes at <span className="font-bold">₹0</span> Convenience
-          Fee
-          <span className="hidden sm:inline">
-            {" "}
-            • Get smoking accessories, fresheners & more in minutes!
-          </span>
-        </p>
-      </div>
-
-      {/* Main Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Left Section - Logo */}
-            <div className="flex items-center space-x-2 sm:space-x-6">
-              <Link to="/">
-                <span className="text-xl sm:text-2xl font-bold text-red-600 tracking-tight">
-                  minutos
-                </span>
-              </Link>
-              <div className="hidden sm:block">
-                <span className="bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-xs font-semibold uppercase">
-                  EXPRESS DELIVERY
-                </span>
-              </div>
-            </div>
-
-            {/* Center Section - Location & Search (Desktop) */}
-            <div className="hidden md:flex items-center space-x-4 flex-1 max-w-2xl mx-4">
-              {/* Location */}
-              <div className="min-w-fit">
-                <div className="flex items-center space-x-2 text-gray-700 px-3 py-2">
-                  <span className="text-sm font-medium whitespace-nowrap max-w-[160px] truncate">
-                    {locationLoading ? (
-                      <span className="flex items-center">
-                        <FaSpinner className="animate-spin w-3 h-3 mr-1" />
-                        Detecting...
-                      </span>
-                    ) : (
-                      selectedLocation
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              {/* Search Bar */}
-              <div className="flex-1">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FaSearch className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder='Search for "cheese slices"'
-                    className="w-full pl-12 pr-4 py-2.5 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none text-sm transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Right Section */}
-            <div className="flex items-center space-x-1 sm:space-x-4">
-              {/* Location (Mobile) */}
-              <div className="md:hidden flex items-center text-gray-700 px-2 py-1 text-sm">
-                <span className="font-medium max-w-[180px] truncate">
-                  {locationLoading ? (
-                    <span className="flex items-center">
-                      <FaSpinner className="animate-spin w-3 h-3 mr-1" />
-                      Detecting...
-                    </span>
-                  ) : (
-                    selectedLocation
-                  )}
-                </span>
-              </div>
-
-              {/* COD Badge */}
-              <div className="hidden lg:block">
-                <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded text-xs font-semibold">
-                  COD
-                </span>
-              </div>
-
-              {/* Cart */}
-              <button
-                className="hidden md:flex items-center p-2 text-gray-700 hover:text-red-600 relative"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <FaShoppingCart className="w-5 h-5" />
-                {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                    {cartItems.length}
-                  </span>
-                )}
-              </button>
-
-              {/* Profile */}
-              <Link
-                to="/profile"
-                className="p-2 text-gray-700 hover:text-red-600"
-              >
-                <FaRegUser className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Search */}
-        <div className="md:hidden px-3 sm:px-4 pb-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <FaSearch className="h-4 w-4 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder='Search for "cheese slices"'
-              className="w-full pl-12 pr-4 py-2.5 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none text-sm transition-all"
-            />
-          </div>
-        </div>
-      </header>
-
-      {/* Category Navigation */}
-      <nav className="bg-white border-b border-gray-100">
-        <div className="px-3 sm:px-4 lg:px-6">
-          {categoriesError && !categoriesLoading && (
-            <div className="text-center py-2">
-              <p className="text-sm text-red-600">
-                Failed to load categories. Using default categories.
-              </p>
-            </div>
-          )}
-
-          {/* Desktop Categories */}
-          <div className="hidden md:flex items-center justify-center relative h-12">
-            {/* Left Arrow */}
-
-            {/* Scrollable categories — show only ~6 at a time */}
-            <div className="flex items-center gap-6 h-12 overflow-x-auto scrollbar-hide px-8 max-w-5xl mx-auto">
-              {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <FaSpinner className="animate-spin w-4 h-4" />
-                  <span className="text-sm">Loading categories...</span>
-                </div>
-              ) : (
-                categories.map((category) => (
-                  <button
-                    key={category._id}
-                    className={`flex-shrink-0 flex items-center gap-2 whitespace-nowrap pb-2 min-w-[120px] ${
-                      activeCategory === category.name
-                        ? "text-red-600 font-medium border-b-2 border-red-600"
-                        : "text-gray-600 hover:text-red-600"
-                    }`}
-                    onClick={() => handleCategorySelect(category.name)}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded flex items-center justify-center ${
-                        activeCategory === category.name
-                          ? "bg-red-100"
-                          : "bg-gray-100"
-                      }`}
-                    >
-                      <span className="text-xs">
-                        {getCategoryIcon(category.name)}
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium">{category.name}</span>
-                  </button>
-                ))
-              )}
-            </div>
-
-            {/* Right Arrow */}
-          </div>
-
-          {/* Mobile Categories */}
-          <div className="hidden flex items-center gap-4 h-16 overflow-x-auto scrollbar-hide px-1">
-            {categoriesLoading ? (
-              <div className="flex items-center gap-2 text-gray-500 px-4">
-                <FaSpinner className="animate-spin w-4 h-4" />
-                <span className="text-sm">Loading...</span>
-              </div>
-            ) : (
-              categories.map((category) => (
-                <button
-                  key={category._id}
-                  className={`flex flex-col items-center gap-1 min-w-fit px-2 py-1 ${
-                    activeCategory === category.name
-                      ? "text-red-600"
-                      : "text-gray-600"
-                  }`}
-                  onClick={() => handleCategorySelect(category.name)}
-                >
-                  <div className="text-2xl">
-                    {getCategoryIcon(category.name)}
-                  </div>
-                  <span className="text-xs font-medium whitespace-nowrap max-w-[60px] truncate">
-                    {category.name}
-                  </span>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      </nav>
 
       {/* Bottom Navigation (Mobile) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
@@ -441,7 +527,7 @@ const Header = () => {
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
