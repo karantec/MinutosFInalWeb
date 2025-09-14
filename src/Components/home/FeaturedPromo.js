@@ -1,20 +1,29 @@
-import { shuffleItems } from "../utils/helper";
-import Misc from "../lib/data/layout.json";
-import { useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react"; // optional arrow icons
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { fetchAds } from "../service/adsService";
 
 const FeaturedPromo = () => {
-  const allPromos = Misc.filter((item) => item.type === 66)[0].objects?.map(
-    (el) => el.data.image_url
-  );
-
-  const promos = shuffleItems(allPromos);
+  const [promos, setPromos] = useState([]);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const loadAds = async () => {
+      try {
+        const data = await fetchAds();
+        if (data?.success) {
+          setPromos(data.banner.advertiseBanners || []);
+        }
+      } catch (err) {
+        console.error("Error loading ads:", err);
+      }
+    };
+    loadAds();
+  }, []);
 
   const scroll = (direction) => {
     if (!scrollRef.current) return;
     const { scrollLeft, clientWidth } = scrollRef.current;
-    const scrollAmount = clientWidth * 0.9; // move ~90% of visible area
+    const scrollAmount = clientWidth * 0.9;
     scrollRef.current.scrollTo({
       left:
         direction === "left"
@@ -27,7 +36,7 @@ const FeaturedPromo = () => {
   return (
     <section>
       <div className="mx-4 relative pb-2 pt-4">
-        {/* Carousel container */}
+        {/* Carousel */}
         <div
           ref={scrollRef}
           className="flex overflow-x-auto no-scrollbar scroll-smooth"
@@ -39,7 +48,7 @@ const FeaturedPromo = () => {
             >
               <img
                 src={promo}
-                alt="..."
+                alt={`Ad-${i}`}
                 className="h-full w-full object-cover"
               />
             </div>

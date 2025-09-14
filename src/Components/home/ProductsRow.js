@@ -1,4 +1,4 @@
-import HeroArea from "./HeroArea";
+import HeroArea2 from "./HeroArea2";
 
 const ProductsRow = ({ data, objects }) => {
   const products = objects.map((obj) =>
@@ -26,7 +26,7 @@ const ProductsRow = ({ data, objects }) => {
 
   return (
     <section className="px-4 py-4 bg-gray-50">
-      <HeroArea />
+      <HeroArea2 />
       {data.show_header && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">

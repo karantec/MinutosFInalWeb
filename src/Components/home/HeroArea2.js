@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchAds } from "../service/adsService";
 
-const HeroArea = () => {
+const HeroArea2 = () => {
   const [banners, setBanners] = useState([]);
 
   useEffect(() => {
@@ -10,7 +10,7 @@ const HeroArea = () => {
         const data = await fetchAds();
         if (data?.success) {
           // you can include multiple banners if you want
-          setBanners([{ id: 1, banner: data.banner.homeBanner1 }]);
+          setBanners([{ id: 2, banner: data.banner.homeBanner2 }]);
         }
       } catch (err) {
         console.error("Error loading hero banners:", err);
@@ -20,7 +20,7 @@ const HeroArea = () => {
   }, []);
 
   return (
-    <section className="mt-4 md:mt-0 py-10 px-2 md:px-0">
+    <section className="mt-4 md:mt-0 px-2 md:px-0">
       {banners.map((ad) => (
         <div key={ad.id} className="mb-4">
           <div className="relative w-full overflow-hidden rounded-xl">
@@ -43,4 +43,4 @@ const HeroArea = () => {
   );
 };
 
-export default HeroArea;
+export default HeroArea2;
