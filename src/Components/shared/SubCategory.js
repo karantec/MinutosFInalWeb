@@ -175,7 +175,7 @@ const FruitsVegetablesComponent = () => {
                   onClick={() => setSelectedCategory(sub)}
                   className={`w-full flex flex-col sm:flex-row items-center gap-2 sm:gap-3 px-2 sm:px-4 py-3 rounded-xl text-center sm:text-left transition-all duration-200 ${
                     selectedCategory._id === sub._id
-                      ? "bg-purple-50 text-purple-700 font-semibold border-2 border-purple-200 shadow-sm"
+                      ? "bg-red-50 text-red-500 font-semibold border-2 border-red-200 shadow-sm"
                       : "text-gray-700 hover:bg-gray-50 border-2 border-transparent"
                   }`}
                 >
@@ -228,7 +228,7 @@ const FruitsVegetablesComponent = () => {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
+                    className="mt-4 text-red-600 hover:text-red-700 font-medium"
                   >
                     Clear search
                   </button>
