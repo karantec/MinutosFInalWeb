@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Star, Search } from "lucide-react";
 import { useParams } from "react-router-dom";
 import subcategoryService from "../service/subcategoryService";
-import axios from "axios";
+import productService from "../service/productService"; // Import the new service
 
 const FruitsVegetablesComponent = () => {
   const { categoryName } = useParams();
@@ -14,69 +14,62 @@ const FruitsVegetablesComponent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Fetch subcategories
   useEffect(() => {
     const fetchSubCategories = async () => {
       try {
-        const result = await subcategoryService.getSubCategories(categoryName);
+        setError(null);
+        const decodedCategoryName = decodeURIComponent(categoryName);
+        const result = await subcategoryService.getSubCategories(
+          decodedCategoryName
+        );
+
         if (result.success) {
           setSubCategories([{ _id: "All", name: "All" }, ...result.data]);
         } else {
           setSubCategories([{ _id: "All", name: "All" }]);
         }
         setSelectedCategory({ _id: "All", name: "All" });
-        setProducts([]); // reset when category changes
+        setProducts([]);
       } catch (error) {
         console.error("Error fetching subcategories:", error);
+        setError("Failed to load subcategories");
         setSubCategories([{ _id: "All", name: "All" }]);
         setSelectedCategory({ _id: "All", name: "All" });
         setProducts([]);
       }
     };
+
     fetchSubCategories();
   }, [categoryName]);
 
-  // Fetch products when subcategory changes
+  // Fetch products when selected category changes
   useEffect(() => {
     const fetchProducts = async () => {
+      if (selectedCategory._id === "All") {
+        setProducts([]);
+        return;
+      }
+
       try {
         setLoading(true);
+        setError(null);
 
-        // "All" means no filtering
-        if (selectedCategory._id === "All") {
-          try {
-            const allResponse = await axios.get(
-              "http://localhost:8000/api/product"
-            );
-            if (allResponse.data && Array.isArray(allResponse.data.data)) {
-              setProducts(allResponse.data.data);
-            } else {
-              setProducts([]);
-            }
-          } catch (err) {
-            console.error("Error fetching all products:", err);
-            setProducts([]);
-          } finally {
-            setLoading(false);
-          }
-          return;
-        }
-
-        const response = await axios.post(
-          "http://localhost:8000/api/product/by-subcategories",
-          {
-            subCategories: [selectedCategory.name],
-          }
+        const result = await productService.getProductsBySubCategories(
+          selectedCategory._id
         );
 
-        if (response.data && Array.isArray(response.data.data)) {
-          setProducts(response.data.data);
+        if (result.success) {
+          setProducts(result.data);
         } else {
+          setError("Failed to load products");
           setProducts([]);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
+        setError("Failed to load products");
         setProducts([]);
       } finally {
         setLoading(false);
@@ -86,28 +79,33 @@ const FruitsVegetablesComponent = () => {
     fetchProducts();
   }, [selectedCategory]);
 
-  // Filter products by search
+  // Filter products by search - updated to match new response structure
   const filteredProducts = products.filter(
     (product) =>
       searchQuery === "" ||
-      product.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product["Product Name"]
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      product.Brand?.toLowerCase().includes(searchQuery.toLowerCase())
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.more_details?.brand &&
+        product.more_details.brand
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()))
   );
 
   const ProductCard = ({ product }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition-all duration-200">
       <img
-        src={product.Images || "https://via.placeholder.com/150"}
-        alt={product["Product Name"] || product.Name}
+        src={
+          product.images && product.images.length > 0
+            ? product.images[0]
+            : "https://via.placeholder.com/150"
+        }
+        alt={product.productName || product.name}
         className="w-full h-32 object-cover rounded-xl mb-2"
       />
       <div className="space-y-1">
         <div className="flex items-start justify-between">
           <span className="font-bold text-lg text-gray-900">
-            ₹{product["Discounted MRP"] || "--"}
+            ₹{product.discountedMRP || product.price || "--"}
           </span>
           <button className="bg-white border border-pink-500 text-pink-500 px-3 py-1 rounded-md text-xs font-bold hover:bg-pink-50 transition-colors">
             ADD
@@ -124,20 +122,26 @@ const FruitsVegetablesComponent = () => {
           )}
         </div>
         <div className="text-xs text-gray-600">
-          {product.Unit || product.Pack}
+          {product.unit || product.pack}
         </div>
         <h3 className="font-medium text-gray-800 text-sm line-clamp-2">
-          {product["Product Name"] || product.Name}
+          {product.productName || product.name}
         </h3>
         <div className="flex items-center gap-1">
           <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
           <span className="text-xs font-medium text-gray-700">
-            {product.Rating || "--"}
+            {product.rating || "--"}
           </span>
+          {product.more_details?.brand && (
+            <span className="text-xs text-gray-500 ml-2">
+              {product.more_details.brand}
+            </span>
+          )}
         </div>
       </div>
     </div>
   );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -145,7 +149,7 @@ const FruitsVegetablesComponent = () => {
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
           <span>Home</span>
           <span>›</span>
-          <span>{categoryName}</span>
+          <span>{decodeURIComponent(categoryName)}</span>
           <span>›</span>
           <span className="text-gray-900 font-medium">
             {selectedCategory?.name || "All"}
@@ -153,7 +157,7 @@ const FruitsVegetablesComponent = () => {
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          Fresh {categoryName}
+          Fresh {decodeURIComponent(categoryName)}
         </h1>
 
         {/* Search Filter */}
@@ -169,6 +173,13 @@ const FruitsVegetablesComponent = () => {
             />
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <div className="flex gap-6">
           {/* Sidebar */}
@@ -215,7 +226,9 @@ const FruitsVegetablesComponent = () => {
 
             {/* Products Grid */}
             {loading ? (
-              <p className="text-gray-500">Loading...</p>
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+              </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {filteredProducts.map((product) => (
@@ -224,7 +237,7 @@ const FruitsVegetablesComponent = () => {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : selectedCategory._id !== "All" ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-gray-400 mb-4">
                   <Search className="w-16 h-16 mx-auto" />
@@ -244,7 +257,7 @@ const FruitsVegetablesComponent = () => {
                   </button>
                 )}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
