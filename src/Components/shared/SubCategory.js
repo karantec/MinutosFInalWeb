@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Star, Search } from "lucide-react";
 import { useParams } from "react-router-dom";
 import subcategoryService from "../service/subcategoryService";
