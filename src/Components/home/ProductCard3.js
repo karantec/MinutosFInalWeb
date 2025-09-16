@@ -19,7 +19,7 @@ const ProductCard3 = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:8000/api/product/subcategories?subCategories=68c90e2b44c6da7aa09c5300"
+          "https://backend.minutos.shop/api/product/subcategories?subCategories=68c90e2b44c6da7aa09c5300"
         );
         setProducts(res.data.data || []);
       } catch (error) {
