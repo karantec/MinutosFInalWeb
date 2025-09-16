@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Star, Search } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import subcategoryService from "../service/subcategoryService";
 import productService from "../service/productService"; // Import the new service
 
@@ -91,56 +91,73 @@ const FruitsVegetablesComponent = () => {
           .includes(searchQuery.toLowerCase()))
   );
 
-  const ProductCard = ({ product }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition-all duration-200">
-      <img
-        src={
-          product.images && product.images.length > 0
-            ? product.images[0]
-            : "https://via.placeholder.com/150"
-        }
-        alt={product.productName || product.name}
-        className="w-full h-32 object-cover rounded-xl mb-2"
-      />
-      <div className="space-y-1">
-        <div className="flex items-start justify-between">
-          <span className="font-bold text-lg text-gray-900">
-            ₹{product.discountedMRP || product.price || "--"}
-          </span>
-          <button className="bg-white border border-pink-500 text-pink-500 px-3 py-1 rounded-md text-xs font-bold hover:bg-pink-50 transition-colors">
-            ADD
-          </button>
-        </div>
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          {product.originalPrice && (
-            <span className="line-through">₹{product.originalPrice}</span>
-          )}
-          {product.amountSaving && (
-            <span className="text-green-600 font-bold">
-              SAVE ₹{product.amountSaving}
+  const ProductCard = ({ product }) => {
+    const navigate = useNavigate();
+
+    const handleNavigate = () => {
+      navigate(`/product/${product._id}`); // navigate to detail page
+    };
+
+    return (
+      <div
+        onClick={handleNavigate}
+        className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 hover:shadow-md transition-all duration-200 cursor-pointer"
+      >
+        <img
+          src={
+            product.images && product.images.length > 0
+              ? product.images[0]
+              : "https://via.placeholder.com/150"
+          }
+          alt={product.productName || product.name}
+          className="w-full h-32 object-cover rounded-xl mb-2"
+        />
+        <div className="space-y-1">
+          <div className="flex items-start justify-between">
+            <span className="font-bold text-lg text-gray-900">
+              ₹{product.discountedMRP || product.price || "--"}
             </span>
-          )}
-        </div>
-        <div className="text-xs text-gray-600">
-          {product.unit || product.pack}
-        </div>
-        <h3 className="font-medium text-gray-800 text-sm line-clamp-2">
-          {product.productName || product.name}
-        </h3>
-        <div className="flex items-center gap-1">
-          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-          <span className="text-xs font-medium text-gray-700">
-            {product.rating || "--"}
-          </span>
-          {product.more_details?.brand && (
-            <span className="text-xs text-gray-500 ml-2">
-              {product.more_details.brand}
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // prevent navigating when clicking ADD
+                console.log("Add to cart:", product._id);
+              }}
+              className="bg-white border border-pink-500 text-pink-500 px-3 py-1 rounded-md text-xs font-bold hover:bg-pink-50 transition-colors"
+            >
+              ADD
+            </button>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            {product.originalPrice && (
+              <span className="line-through">₹{product.originalPrice}</span>
+            )}
+            {product.amountSaving && (
+              <span className="text-green-600 font-bold">
+                SAVE ₹{product.amountSaving}
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-gray-600">
+            {product.unit || product.pack}
+          </div>
+          <h3 className="font-medium text-gray-800 text-sm line-clamp-2">
+            {product.productName || product.name}
+          </h3>
+          <div className="flex items-center gap-1">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-xs font-medium text-gray-700">
+              {product.rating || "--"}
             </span>
-          )}
+            {product.more_details?.brand && (
+              <span className="text-xs text-gray-500 ml-2">
+                {product.more_details.brand}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">

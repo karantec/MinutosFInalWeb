@@ -21,7 +21,7 @@ const App = () => {
           path="/subCategory/:categoryName"
           element={<FruitsVegetablesComponent />}
         />
-        {/* <Route path="/product/:id" element={<ProductDetailScreen />} /> */}
+        <Route path="/product/:id" element={<ProductDetailScreen />} />
       </Routes>
 
       <Footer />
