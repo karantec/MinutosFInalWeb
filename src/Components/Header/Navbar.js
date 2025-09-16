@@ -7,58 +7,34 @@ import {
   FaSpinner,
   FaMapMarkerAlt,
   FaChevronDown,
+  FaHome,
+  FaList,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { locationService } from "../service/locationService";
 import { categoryService } from "../service/categoryService";
 
 const Header = () => {
-  const [activeCategory, setActiveCategory] = useState("All");
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
+  const [isLocationPopup, setIsLocationPopup] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(
-    "Detecting location..."
+    "Mumbai Central, Mumbai, Maharashtra"
   );
-  const [locationLoading, setLocationLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [savedAddresses, setSavedAddresses] = useState([
-    {
-      id: 1,
-      name: "Home",
-      address: "123 Main Street, Apartment 4B, New York, NY 10001",
-      type: "home",
-    },
-    {
-      id: 2,
-      name: "Work",
-      address: "456 Office Park, Building C, New York, NY 10002",
-      type: "work",
-    },
-  ]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
-  // Default category icons mapping
-  const getCategoryIcon = (categoryName) => {
-    const iconMap = {
-      "Fruits & Vegetables": "🥦",
-      "Atta, Rice, Oil & Dals": "🌾",
-      "Masala & Dry Fruits": "🌶️",
-      "Cold Drinks & Juices": "🥤",
-      "Biscuits & Cookies": "🍪",
-      "Tea, Coffee & More": "☕",
-      "Meat, Fish & Eggs": "🥩",
-      Electronics: "🎧",
-      Beauty: "🧴",
-      Fashion: "👕",
-      Toys: "🧸",
-      Home: "🏠",
-      Mobiles: "📱",
-      All: "🛍️",
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
     };
-    return iconMap[categoryName] || "📦";
-  };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Auto-detect location
   useEffect(() => {
@@ -73,16 +49,13 @@ const Header = () => {
 
           setSelectedLocation(locationString);
           locationService.saveLocationToStorage(locationString);
-        } else {
-          setSelectedLocation("Location not available");
         }
-      } catch {
-        setSelectedLocation("Location not available");
-      } finally {
-        setLocationLoading(false);
+      } catch (error) {
+        console.log("Location detection failed");
       }
     };
 
+    // Uncomment to enable auto-detection
     detectLocation();
   }, []);
 
@@ -96,27 +69,13 @@ const Header = () => {
         const result = await categoryService.getCategories();
 
         if (result.success) {
-          const allCategories = [{ _id: "all", name: "All" }, ...result.data];
-          setCategories(allCategories);
+          // Don't add "All" category for desktop navigation
+          setCategories(result.data);
         } else {
           setCategoriesError(result.error || "Failed to fetch categories");
-          setCategories([
-            { _id: "all", name: "All" },
-            { _id: "electronics", name: "Electronics" },
-            { _id: "beauty", name: "Beauty" },
-            { _id: "fashion", name: "Fashion" },
-            { _id: "home", name: "Home" },
-          ]);
         }
       } catch {
         setCategoriesError("Network error occurred");
-        setCategories([
-          { _id: "all", name: "All" },
-          { _id: "electronics", name: "Electronics" },
-          { _id: "beauty", name: "Beauty" },
-          { _id: "fashion", name: "Fashion" },
-          { _id: "home", name: "Home" },
-        ]);
       } finally {
         setCategoriesLoading(false);
       }
@@ -125,249 +84,15 @@ const Header = () => {
     fetchCategories();
   }, []);
 
-  const handleCategorySelect = (categoryName) => {
-    setActiveCategory(categoryName);
-  };
-
   // Sample cart items
-  const cartItems = [
-    { id: 1, name: "Product 1", price: 299, quantity: 2 },
-    { id: 2, name: "Product 2", price: 499, quantity: 1 },
-  ];
-
+  const cartItems = [{ id: 1, name: "Curd", price: 31, quantity: 1 }];
   const cartTotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
 
   return (
-    <>
-      {/* Top Banner */}
-      <div className="hidden sm:block bg-red-700 text-white text-center py-1.5 px-2">
-        <p className="text-xs sm:text-sm">
-          Get Cigarettes at <span className="font-bold">₹0</span> Convenience
-          Fee
-          <span className="hidden sm:inline">
-            {" "}
-            • Get smoking accessories, fresheners & more in minutes!
-          </span>
-        </p>
-      </div>
-
-      {/* Main Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="px-3 sm:px-4 lg:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 sm:py-0">
-            {/* Logo */}
-            <div className="flex items-center justify-between sm:justify-start space-x-2 sm:space-x-6">
-              <Link to="/">
-                <span className="text-xl sm:text-2xl font-bold text-red-600 tracking-tight">
-                  minutos
-                </span>
-              </Link>
-              <div className="hidden sm:block">
-                <span className="bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-xs font-semibold uppercase">
-                  EXPRESS DELIVERY
-                </span>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="mt-2 sm:mt-0 flex-1 sm:max-w-2xl">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <FaSearch className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder='Search for "cheese slices"'
-                  className="w-full pl-12 pr-4 py-2 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none text-sm transition-all"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Cart + Profile */}
-            <div className="flex items-center justify-end space-x-3 mt-2 sm:mt-0">
-              <button
-                className="flex items-center p-2 text-gray-700 hover:text-red-600 relative"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <FaShoppingCart className="w-5 h-5" />
-                {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                    {cartItems.length}
-                  </span>
-                )}
-              </button>
-              <Link
-                to="/profile"
-                className="p-2 text-gray-700 hover:text-red-600"
-              >
-                <FaRegUser className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Categories */}
-        <nav className="bg-white border-t border-gray-100">
-          <div className="px-2 sm:px-4 lg:px-6">
-            <div className="flex items-center justify-start sm:justify-center h-12 overflow-x-auto scrollbar-hide gap-4">
-              {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <FaSpinner className="animate-spin w-4 h-4" />
-                  <span className="text-sm">Loading...</span>
-                </div>
-              ) : (
-                categories.map((category) => (
-                  <button
-                    key={category._id}
-                    className={`flex-shrink-0 flex items-center gap-1 whitespace-nowrap pb-2 min-w-fit ${
-                      activeCategory === category.name
-                        ? "text-red-600 font-medium border-b-2 border-red-600"
-                        : "text-gray-600 hover:text-red-600"
-                    }`}
-                    onClick={() => handleCategorySelect(category.name)}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded flex items-center justify-center ${
-                        activeCategory === category.name
-                          ? "bg-red-100"
-                          : "bg-gray-100"
-                      }`}
-                    >
-                      <span className="text-xs">
-                        {getCategoryIcon(category.name)}
-                      </span>
-                    </div>
-                    <span className="text-sm">{category.name}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </nav>
-      </header>
-
-      {/* Location Popup */}
-      {isLocationPopupOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Select Location</h2>
-              <button
-                onClick={() => setIsLocationPopupOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100"
-              >
-                <FaTimes className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="p-4 border-b">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaSearch className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search for area, street name..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:bg-white outline-none text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-y-auto max-h-[50vh]">
-              <div className="p-4">
-                <h3 className="font-medium text-gray-700 mb-3">
-                  Saved Addresses
-                </h3>
-                <div className="space-y-3">
-                  {savedAddresses.map((address) => (
-                    <div
-                      key={address.id}
-                      className="flex items-start p-3 border rounded-lg cursor-pointer hover:border-red-500"
-                      onClick={() => {
-                        setSelectedLocation(address.address);
-                        setIsLocationPopupOpen(false);
-                      }}
-                    >
-                      <div className="flex-shrink-0 mt-1">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            address.type === "home"
-                              ? "bg-blue-100 text-blue-600"
-                              : "bg-purple-100 text-purple-600"
-                          }`}
-                        >
-                          {address.type === "home" ? "🏠" : "💼"}
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <h4 className="font-medium">{address.name}</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {address.address}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-4 border-t">
-                <h3 className="font-medium text-gray-700 mb-3">
-                  Detect Current Location
-                </h3>
-                <button
-                  className="w-full flex items-center p-3 border rounded-lg hover:border-red-500"
-                  onClick={async () => {
-                    setLocationLoading(true);
-                    setIsLocationPopupOpen(false);
-                    try {
-                      const result =
-                        await locationService.getUserLocationWithAddress();
-                      if (result.success && result.location) {
-                        let locationString =
-                          result.location.address?.formatted ||
-                          result.location.address?.full ||
-                          "Current Location";
-                        setSelectedLocation(locationString);
-                        locationService.saveLocationToStorage(locationString);
-                      } else {
-                        setSelectedLocation("Location not available");
-                      }
-                    } catch {
-                      setSelectedLocation("Location not available");
-                    } finally {
-                      setLocationLoading(false);
-                    }
-                  }}
-                >
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      <FaMapMarkerAlt className="text-red-600" />
-                    </div>
-                  </div>
-                  <div className="ml-3 text-left">
-                    <h4 className="font-medium">Use current location</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Enabled location permission required
-                    </p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 border-t">
-              <button className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors">
-                Add New Address
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+    <div className="bg-white sticky top-0 z-50 shadow-sm">
       {/* Cart Sidebar */}
       <div
         className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
@@ -375,6 +100,7 @@ const Header = () => {
         }`}
       >
         <div className="flex flex-col h-full">
+          {/* Cart Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="text-lg font-semibold">
               Your Cart ({cartItems.length})
@@ -387,6 +113,7 @@ const Header = () => {
             </button>
           </div>
 
+          {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
             {cartItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -419,6 +146,7 @@ const Header = () => {
             )}
           </div>
 
+          {/* Cart Footer */}
           {cartItems.length > 0 && (
             <div className="border-t p-4">
               <div className="flex justify-between items-center mb-4">
@@ -434,16 +162,261 @@ const Header = () => {
       </div>
 
       {/* Overlay */}
-      {(isCartOpen || isLocationPopupOpen) && (
+      {isCartOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => {
-            setIsCartOpen(false);
-            setIsLocationPopupOpen(false);
-          }}
+          onClick={() => setIsCartOpen(false)}
         ></div>
       )}
-    </>
+
+      {/* Location Popup */}
+      {isLocationPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+            <button
+              onClick={() => setIsLocationPopup(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-black"
+            >
+              <FaTimes />
+            </button>
+            <h2 className="text-lg font-semibold mb-4 text-red-600">
+              Choose your location
+            </h2>
+            <p className="text-sm text-gray-600 mb-2">
+              Detect your location or enter manually:
+            </p>
+            <button
+              onClick={() => {
+                setLocationLoading(true);
+                setIsLocationPopup(false);
+              }}
+              className="w-full bg-red-600 text-white py-2 rounded-md mb-3 hover:bg-red-700"
+            >
+              Detect Current Location
+            </button>
+            <input
+              type="text"
+              placeholder="Enter area, street name..."
+              className="w-full border px-3 py-2 rounded-md text-sm"
+              onChange={(e) => setSelectedLocation(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Main Header */}
+      <header className="bg-white">
+        {/* Desktop Layout */}
+        {!isMobileView && (
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between py-4">
+              {/* Left - Logo and Location */}
+              <div className="flex items-center gap-6">
+                {/* Logo */}
+                <Link to="/" className="flex items-center">
+                  <div className="text-2xl text-red-400">Minutos</div>
+                </Link>
+
+                {/* Location */}
+                <div
+                  className="flex items-center cursor-pointer"
+                  onClick={() => setIsLocationPopup(true)}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-lg font-semibold text-black">
+                      Delivery in 17 minutes
+                    </span>
+                    <div className="flex items-center text-sm text-gray-600">
+                      {locationLoading ? (
+                        <span className="flex items-center">
+                          <FaSpinner className="animate-spin w-3 h-3 mr-1" />
+                          Detecting...
+                        </span>
+                      ) : (
+                        <>
+                          <span className="truncate max-w-[300px]">
+                            {selectedLocation}
+                          </span>
+                          <FaChevronDown className="ml-1 w-3 h-3" />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Center - Search Bar */}
+              <div className="flex-1 max-w-md mx-8">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <FaSearch className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder='Search "egg"'
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Right - Login and Cart */}
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/login"
+                  className="text-lg font-medium text-gray-800 hover:text-green-600"
+                >
+                  Login
+                </Link>
+
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <FaShoppingCart className="w-4 h-4" />
+                  <span className="font-medium">{cartItems.length} items</span>
+                  <span className="font-medium">₹{cartTotal}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Layout */}
+        {isMobileView && (
+          <div className="px-4">
+            {/* Top Row - Location and User Icon */}
+            <div className="flex items-center justify-between py-3">
+              {/* Left - Location */}
+              <div
+                className="flex items-center cursor-pointer flex-1"
+                onClick={() => setIsLocationPopup(true)}
+              >
+                <div className="flex flex-col">
+                  <span className="text-lg font-semibold text-black">
+                    Delivery in 17 minutes
+                  </span>
+                  <div className="flex items-center text-sm text-gray-600">
+                    {locationLoading ? (
+                      <span className="flex items-center">
+                        <FaSpinner className="animate-spin w-3 h-3 mr-1" />
+                        Detecting...
+                      </span>
+                    ) : (
+                      <>
+                        <span className="truncate max-w-[200px]">
+                          {selectedLocation}
+                        </span>
+                        <FaChevronDown className="ml-1 w-3 h-3" />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right - User Icon */}
+              <Link
+                to="/login"
+                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+              >
+                <FaRegUser className="w-5 h-5 text-gray-700" />
+              </Link>
+            </div>
+
+            {/* Search Bar */}
+            <div className="pb-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <FaSearch className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder='Search "egg"'
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border-0 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Category Navigation - Desktop Only */}
+      {!isMobileView && (
+        <nav className="bg-white border-t border-gray-100">
+          <div className="max-w-7xl mx-auto px-4">
+            {categoriesError && !categoriesLoading && (
+              <div className="text-center py-2">
+                <p className="text-sm text-red-600">
+                  Failed to load categories.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-start py-3 overflow-x-auto scrollbar-hide">
+              {categoriesLoading ? (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <FaSpinner className="animate-spin w-4 h-4" />
+                  <span className="text-sm">Loading categories...</span>
+                </div>
+              ) : (
+                categories.map((category) => (
+                  <Link
+                    key={category._id}
+                    to={`/category/${category._id}`}
+                    className="flex-shrink-0 text-sm font-medium text-gray-700 hover:text-green-600 transition-colors duration-200 whitespace-nowrap px-4 py-2 mx-1 rounded-md hover:bg-gray-50"
+                  >
+                    {category.name}
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </nav>
+      )}
+
+      {/* Mobile Bottom Navigation */}
+      {isMobileView && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
+          <div className="flex justify-around items-center py-2">
+            {/* Home Button */}
+            <Link
+              to="/"
+              className="flex flex-col items-center justify-center text-gray-700"
+            >
+              <FaHome className="w-6 h-6" />
+              <span className="text-xs mt-1">Home</span>
+            </Link>
+            {/* Categories Button */}
+            <Link
+              to="/category"
+              className="flex flex-col items-center justify-center text-gray-700"
+            >
+              <button className="flex flex-col items-center justify-center text-gray-700">
+                <FaList className="w-6 h-6" />
+                <span className="text-xs mt-1">Categories</span>
+              </button>
+            </Link>{" "}
+            {/* Search Button */}
+            <button className="flex flex-col items-center justify-center text-gray-700">
+              <FaSearch className="w-6 h-6" />
+              <span className="text-xs mt-1">Search</span>
+            </button>
+            {/* Cart Button */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="flex flex-col items-center justify-center text-gray-700 relative"
+            >
+              <FaShoppingCart className="w-6 h-6" />
+              {cartItems.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                  {cartItems.length}
+                </span>
+              )}
+              <span className="text-xs mt-1">Cart</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

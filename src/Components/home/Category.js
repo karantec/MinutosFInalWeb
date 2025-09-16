@@ -2,10 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import categoryService from "../service/categoryService";
-import ProductCard from "./ProductCard";
-import ProductCard3 from "./ProductCard3";
-import ChocolatePage from "./ChoclatePage";
-import Mithai from "./Mithai";
 
 const CategoriesList = () => {
   const [categories, setCategories] = useState([]);
@@ -61,45 +57,36 @@ const CategoriesList = () => {
   }
 
   return (
-    <section className="my-4 px-4 max-w-7xl mx-auto">
-      {/* Categories Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+    <section className="my-4 px-4">
+      <h2 className="text-lg font-semibold mb-4 text-gray-800">
+        Shop by Category
+      </h2>
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4">
         {categories.map((category) => (
-          <div
+          <Link
             key={category._id}
-            className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            to={`/subCategory/${encodeURIComponent(category.name)}`}
+            className="flex flex-col items-center group"
           >
-            <div className="aspect-square mb-2 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
-              <Link to={`/subCategory/${encodeURIComponent(category.name)}`}>
-                {category.image ? (
-                  <img
-                    src={category.image}
-                    className="w-full h-full object-cover"
-                    alt={category.name}
-                    onError={(e) => (e.target.style.display = "none")}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-red-100 text-red-600 text-2xl">
-                    {category.name.charAt(0)}
-                  </div>
-                )}
-              </Link>
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-200 group-hover:shadow-md transition">
+              {category.image ? (
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => (e.target.style.display = "none")}
+                />
+              ) : (
+                <span className="text-lg font-bold text-red-600">
+                  {category.name.charAt(0)}
+                </span>
+              )}
             </div>
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-800 leading-tight">
-                {category.name}
-              </h3>
-            </div>
-          </div>
+            <p className="text-xs text-gray-700 font-medium mt-2 text-center line-clamp-2">
+              {category.name}
+            </p>
+          </Link>
         ))}
-      </div>
-
-      {/* Additional Components Section */}
-      <div className="mt-10 space-y-8">
-        <ProductCard />
-        <ProductCard3 />
-        <ChocolatePage />
-        <Mithai />
       </div>
     </section>
   );

@@ -20,10 +20,10 @@ const Home = () => {
       <FeaturedPromo />
       <CategoriesList />
       <DiscountOffers />
-      <ProductCard />
-      <ProductCard3 />
-      <ChocolatePage />
-      <Mithai />
+      {/* <ProductCard />
+      <ProductCard3 /> */}
+      {/* <ChocolatePage />
+      <Mithai /> */}
       {/* <HighlightedPromo/> */}
       {/* {productItems.map((products, i) => (
         <ProductsRow key={i} {...products} />

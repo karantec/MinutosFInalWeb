@@ -38,8 +38,7 @@ const ProductCard3 = () => {
 
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
-    console.log("Added to cart:", product);
-    // ✅ Add Redux/Context/LocalStorage cart logic here
+    alert(`${product.name} added to cart!`);
   };
 
   if (loading) {
@@ -54,132 +53,140 @@ const ProductCard3 = () => {
         </h2>
       </div>
 
-      {/* Match previous card design */}
-      <div className="hidden md:block overflow-x-auto scrollbar-hide">
-        <div className="flex space-x-3 pb-2">
-          {products.map((product) => (
+      {/* Desktop & Tablet View - Compact Cards */}
+      <div className="hidden md:flex flex-wrap gap-4">
+        {products.map((product) => {
+          const discount =
+            product.originalPrice && product.price
+              ? Math.round(
+                  ((product.originalPrice - product.price) /
+                    product.originalPrice) *
+                    100
+                )
+              : 0;
+
+          return (
             <div
               key={product._id}
               onClick={() => handleCardClick(product._id)}
-              className="flex-shrink-0 w-32 bg-white rounded-lg border border-gray-200 p-3 relative cursor-pointer hover:shadow-md transition-shadow"
+              className="relative w-40 bg-white rounded-xl border border-gray-200 shadow-sm p-3 cursor-pointer hover:shadow-md transition"
             >
-              <div className="relative mb-2">
-                <img
-                  src={product.images?.[0] || defaultImage}
-                  alt={product.name || "Product"}
-                  className="w-full h-24 object-contain rounded"
-                  onError={handleImageError}
-                />
-                <button
-                  onClick={(e) => handleAddToCart(product, e)}
-                  className="absolute bottom-1 right-1 bg-white border-2 border-pink-500 text-pink-500 font-bold text-xs px-2 py-1 rounded hover:bg-pink-500 hover:text-white transition-colors"
-                >
-                  ADD
-                </button>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center space-x-1">
-                  <span className="text-black font-bold text-sm">
-                    ₹{product.price}
-                  </span>
-                  {product.originalPrice && (
-                    <span className="text-gray-400 text-xs line-through">
-                      ₹{product.originalPrice}
-                    </span>
-                  )}
+              {/* Discount Badge */}
+              {discount > 0 && (
+                <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded">
+                  {discount}% OFF
                 </div>
+              )}
 
-                {product.amountSaving > 0 && (
-                  <div className="text-green-600 text-xs font-medium">
-                    SAVE ₹{product.amountSaving}
-                  </div>
-                )}
-
-                <div className="text-xs text-gray-600">{product.unit}</div>
-
-                <h3 className="text-xs text-black font-medium leading-tight line-clamp-2">
-                  {product.name}
-                </h3>
-
-                <div className="text-xs text-teal-600 font-medium">
-                  {product.category?.[0]?.name}
-                </div>
-
-                {product.rating && (
-                  <div className="flex items-center space-x-1">
-                    <span className="text-green-600 text-xs">★</span>
-                    <span className="text-xs font-medium">
-                      {product.rating}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mobile Grid View */}
-      <div className="md:hidden grid grid-cols-3 gap-3">
-        {products.map((product) => (
-          <div
-            key={product._id}
-            onClick={() => handleCardClick(product._id)}
-            className="bg-white rounded-lg border border-gray-200 p-3 relative cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="relative mb-2">
+              {/* Product Image */}
               <img
                 src={product.images?.[0] || defaultImage}
                 alt={product.name || "Product"}
-                className="w-full h-24 object-contain rounded"
+                className="w-full h-24 object-contain mb-2"
                 onError={handleImageError}
               />
-              <button
-                onClick={(e) => handleAddToCart(product, e)}
-                className="absolute bottom-1 right-1 bg-white border-2 border-pink-500 text-pink-500 font-bold text-xs px-2 py-1 rounded hover:bg-pink-500 hover:text-white transition-colors"
-              >
-                ADD
-              </button>
-            </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center space-x-1">
-                <span className="text-black font-bold text-sm">
+              {/* Delivery Time */}
+              <p className="text-gray-500 text-[11px] mb-1">⏱ 18 MINS</p>
+
+              {/* Product Name */}
+              <h3 className="text-xs font-medium text-black leading-tight line-clamp-2 mb-1">
+                {product.name}
+              </h3>
+
+              {/* Unit */}
+              <p className="text-[11px] text-gray-500 mb-1">{product.unit}</p>
+
+              {/* Price Section */}
+              <div className="flex items-center space-x-1 mb-2">
+                <span className="font-bold text-black text-sm">
                   ₹{product.price}
                 </span>
                 {product.originalPrice && (
-                  <span className="text-gray-400 text-xs line-through">
+                  <span className="text-gray-400 text-[11px] line-through">
                     ₹{product.originalPrice}
                   </span>
                 )}
               </div>
 
-              {product.amountSaving > 0 && (
-                <div className="text-green-600 text-xs font-medium">
-                  SAVE ₹{product.amountSaving}
+              {/* Add Button */}
+              <button
+                onClick={(e) => handleAddToCart(product, e)}
+                className="w-full border border-red-600 text-red-600 font-semibold text-xs py-1 rounded hover:bg-red-600 hover:text-white transition"
+              >
+                ADD
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile Grid View - 3 per row */}
+      <div className="md:hidden grid grid-cols-3 gap-3">
+        {products.map((product) => {
+          const discount =
+            product.originalPrice && product.price
+              ? Math.round(
+                  ((product.originalPrice - product.price) /
+                    product.originalPrice) *
+                    100
+                )
+              : 0;
+
+          return (
+            <div
+              key={product._id}
+              onClick={() => handleCardClick(product._id)}
+              className="relative bg-white rounded-xl border border-gray-200 shadow-sm p-3 cursor-pointer hover:shadow-md transition"
+            >
+              {/* Discount Badge */}
+              {discount > 0 && (
+                <div className="absolute top-2 left-2 bg-blue-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                  {discount}% OFF
                 </div>
               )}
 
-              <div className="text-xs text-gray-600">{product.unit}</div>
+              {/* Product Image */}
+              <img
+                src={product.images?.[0] || defaultImage}
+                alt={product.name || "Product"}
+                className="w-full h-20 object-contain mb-1"
+                onError={handleImageError}
+              />
 
-              <h3 className="text-xs text-black font-medium leading-tight line-clamp-2">
+              {/* Delivery Time */}
+              <p className="text-gray-500 text-[10px] mb-1">⏱ 18 MINS</p>
+
+              {/* Product Name */}
+              <h3 className="text-[11px] font-medium text-black leading-tight line-clamp-2 mb-1">
                 {product.name}
               </h3>
 
-              <div className="text-xs text-teal-600 font-medium">
-                {product.category?.[0]?.name}
+              {/* Unit */}
+              <p className="text-[10px] text-gray-500 mb-1">{product.unit}</p>
+
+              {/* Price Section */}
+              <div className="flex items-center space-x-1 mb-1">
+                <span className="font-bold text-black text-xs">
+                  ₹{product.price}
+                </span>
+                {product.originalPrice && (
+                  <span className="text-gray-400 text-[10px] line-through">
+                    ₹{product.originalPrice}
+                  </span>
+                )}
               </div>
 
-              {product.rating && (
-                <div className="flex items-center space-x-1">
-                  <span className="text-green-600 text-xs">★</span>
-                  <span className="text-xs font-medium">{product.rating}</span>
-                </div>
-              )}
+              {/* Add Button */}
+              <button
+                onClick={(e) => handleAddToCart(product, e)}
+                className="w-full border border-red-600 text-red-600 font-semibold text-[10px] py-1 rounded hover:bg-red-600 hover:text-white transition"
+              >
+                ADD
+              </button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
