@@ -7,6 +7,7 @@ import Home from "./Components/pages/Home";
 import SettingsPage from "./Components/shared/Profile";
 import FruitsVegetablesComponent from "./Components/shared/SubCategory";
 import OTPLoginSystem from "./Components/Login/OtpLogin";
+import ProductDetailScreen from "./Components/home/ProductDetail";
 const App = () => {
   return (
     <div>
@@ -20,6 +21,7 @@ const App = () => {
           path="/subCategory/:categoryName"
           element={<FruitsVegetablesComponent />}
         />
+        {/* <Route path="/product/:id" element={<ProductDetailScreen />} /> */}
       </Routes>
 
       <Footer />
