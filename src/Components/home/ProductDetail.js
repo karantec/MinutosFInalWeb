@@ -214,7 +214,9 @@ export default function ProductDetailScreen() {
             className="w-6 h-6 text-gray-700 cursor-pointer hover:bg-gray-100 rounded-full p-1"
             onClick={() => navigate(-1)}
           />
-          <h1 className="text-lg font-medium text-gray-900">Product Details</h1>
+          <h1 className="text-lg font-medium text-gray-900">
+            {productCategory}
+          </h1>
           <div className="flex items-center space-x-4">
             <Share2
               className="w-5 h-5 text-gray-600 cursor-pointer hover:bg-gray-100 rounded-full p-1"
@@ -279,7 +281,7 @@ export default function ProductDetailScreen() {
                 {/* Highlights Section */}
                 <div className="mt-8 bg-gray-50 rounded-xl p-6">
                   <h3 className="font-semibold text-gray-900 mb-4">
-                    Product Details
+                    {productName}
                   </h3>
                   <div className="space-y-3">
                     <div className="text-sm">

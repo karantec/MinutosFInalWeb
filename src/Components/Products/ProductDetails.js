@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { IoCaretForwardSharp } from 'react-icons/io5';
-import { Link } from 'react-router-dom';
-import { getProductForCart } from '../../utils/helper';
-import { allFeatures } from '../BrandPromotion';
-import { AddToCartButton } from '../shared';
-import Breadcrumb from './Breadcrumb';
-import ProductGallery from './ProductGallery';
-import ProductInfoList from './ProductInfoList';
-import ProductVarients from './ProductVarients';
+import { useState } from "react";
+import { IoCaretForwardSharp } from "react-icons/io5";
+import { Link } from "react-router-dom";
+import { getProductForCart } from "../../utils/helper";
+import { allFeatures } from "../BrandPromotion";
+import { AddToCartButton } from "../shared";
+import Breadcrumb from "./Breadcrumb";
+import ProductGallery from "./ProductGallery";
+import ProductInfoList from "./ProductInfoList";
+import ProductVarients from "./ProductVarients";
 
 const ProductDetails = (props) => {
   const { product, varients } = props;
@@ -35,7 +35,7 @@ const ProductDetails = (props) => {
             </h1>
             <Link to="/">
               <div className="cursor-pointer text-[#0c831f] font-semibold text-lg flex items-center">
-                {currentProduct.brand}{' '}
+                {currentProduct.brand}{" "}
                 <IoCaretForwardSharp size={14} className="ml-0.5" />
               </div>
             </Link>
@@ -49,9 +49,7 @@ const ProductDetails = (props) => {
               <AddToCartButton size="lg" product={productAsCartItem} />
             </div>
             <div className="lg:hidden mt-8">
-              <h4 className="text-2xl font-medium _text-muted">
-                Product Details
-              </h4>
+              <h4 className="text-2xl font-medium _text-muted"></h4>
               <ProductInfoList {...currentProduct.attribute_collection} />
             </div>
             <div className="pb-4 hidden lg:block">
