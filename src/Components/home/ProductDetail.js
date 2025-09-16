@@ -206,10 +206,10 @@ export default function ProductDetailScreen() {
   const currentImage = productImages[selectedImage] || defaultImage;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full bg-red-50 mb-5">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
+      <div className="sticky top-0 z-50  border-b ">
+        <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
           <ChevronLeft
             className="w-6 h-6 text-gray-700 cursor-pointer hover:bg-gray-100 rounded-full p-1"
             onClick={() => navigate(-1)}
@@ -233,7 +233,7 @@ export default function ProductDetailScreen() {
       </div>
 
       {/* Main Content Container - Centered and Constrained */}
-      <div className="max-w-6xl mx-auto bg-white shadow-sm rounded-lg overflow-hidden mt-4 mb-4 lg:mb-8">
+      <div className="max-w-6xl mx-auto  shadow-sm rounded-lg overflow-hidden mt-4 mb-8 lg:mb-8">
         <div className="pb-20 lg:pb-8">
           {/* Desktop Layout */}
           <div className="hidden lg:flex">
