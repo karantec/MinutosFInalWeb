@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import HeroArea2 from "./HeroArea2";
 import axios from "axios";
+import HeroArea4 from "./HeroArea4";
 
 const Mithai = () => {
   const [products, setProducts] = useState([]);
@@ -48,7 +49,7 @@ const Mithai = () => {
 
   return (
     <section className="px-4 py-6 bg-gray-50">
-      <HeroArea2 />
+      <HeroArea4 />
 
       {/* Title + See All */}
       <div className="mb-4 flex items-center justify-between">

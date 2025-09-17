@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import HeroArea3 from "./HeroArea3";
 
 const ProductCard3 = () => {
   const [products, setProducts] = useState([]);
@@ -47,11 +48,12 @@ const ProductCard3 = () => {
 
   return (
     <section className="px-4 py-6 bg-gray-50">
-      {/* Section Heading */}
+      {/* Section Heading */} <HeroArea3 />
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-xl text-black">
           Morning and Breakfast Dairy
         </h2>
+
         <button
           onClick={() => navigate("/products")}
           className="text-red-600 text-sm font-semibold hover:underline"
@@ -59,7 +61,6 @@ const ProductCard3 = () => {
           See all
         </button>
       </div>
-
       {/* Horizontal Scroll for Products */}
       <div className="overflow-x-auto scrollbar-hide">
         <div className="flex space-x-4 min-w-max">
