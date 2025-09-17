@@ -1,10 +1,11 @@
 // services/categoryService.js
 
 // Use env variable if available, otherwise fallback to default
-const API_BASE_URL = "https://backend.minutos.shop/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "https://backend.minutos.shop/api";
 
 export const categoryService = {
-  // Get all categories
+  // ✅ Get all categories (simple list)
   getCategories: async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/category/getcategories`, {
@@ -28,6 +29,40 @@ export const categoryService = {
       };
     } catch (error) {
       console.error("Error fetching categories:", error);
+      return {
+        success: false,
+        error: error.message,
+        data: [],
+      };
+    }
+  },
+
+  // ✅ Get categories with subcategories (nested response)
+  getCategoriesWithSubcategories: async () => {
+    try {
+      const response = await fetch(
+        `https://backend.minutos.shop/api/subcategory/categories-with-subcategories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.categories, // nested categories + subcategories
+        count: data.count,
+        message: data.message,
+      };
+    } catch (error) {
+      console.error("Error fetching categories with subcategories:", error);
       return {
         success: false,
         error: error.message,

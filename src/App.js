@@ -8,6 +8,7 @@ import SettingsPage from "./Components/shared/Profile";
 import FruitsVegetablesComponent from "./Components/shared/SubCategory";
 import OTPLoginSystem from "./Components/Login/OtpLogin";
 import ProductDetailScreen from "./Components/home/ProductDetail";
+import CategoriesSub from "./Components/home/Category";
 
 const App = () => {
   return (
@@ -22,6 +23,8 @@ const App = () => {
           path="/subCategory/:categoryName"
           element={<FruitsVegetablesComponent />}
         />
+        <Route path="/subcategory" element={<CategoriesSub />} />
+
         <Route path="/product/:id" element={<ProductDetailScreen />} />
       </Routes>
 

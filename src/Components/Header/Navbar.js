@@ -387,7 +387,7 @@ const Header = () => {
             </Link>
             {/* Categories Button */}
             <Link
-              to="/category"
+              to="/subcategory"
               className="flex flex-col items-center justify-center text-gray-700"
             >
               <button className="flex flex-col items-center justify-center text-gray-700">
