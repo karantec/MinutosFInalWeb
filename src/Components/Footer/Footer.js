@@ -55,82 +55,82 @@ const Footer = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Fruits & Vegetables
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Atta, Rice, Oil & Dal
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Masala & Dry Fruits
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Sweet Cravings
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Frozen Food & Ice Cream
               </h4>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Baby Food
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Dairy, Bread & Eggs
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Cold Drinks & Juices
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Munchies
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Meats, Fish & Eggs
               </h4>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Breakfast & Sauces
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Tea, Coffee & More
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Biscuits
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Makeup & Beauty
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Bath & Body
               </h4>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Cleaning Essentials
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Home Needs
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Pharmaceuticals & Accessories
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Hygiene & Grooming
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Health & Baby Care
               </h4>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Humayama Brands
               </h4>
-              <h4 className="font-semibold mb-2 text-sm text-gray-800">
+              <h4 className="mb-2 text-sm text-gray-500 font-medium">
                 Paar Corner
               </h4>
             </div>
