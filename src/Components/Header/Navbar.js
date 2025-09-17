@@ -392,7 +392,7 @@ const Header = () => {
             >
               <button className="flex flex-col items-center justify-center text-gray-700">
                 <FaList className="w-6 h-6" />
-                <span className="text-xs mt-1">Categories</span>
+                <span className="text-xs mt-1">Categories Of Product</span>
               </button>
             </Link>{" "}
             {/* Search Button */}
