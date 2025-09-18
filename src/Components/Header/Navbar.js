@@ -5,16 +5,17 @@ import {
   FaSearch,
   FaTimes,
   FaSpinner,
-  FaMapMarkerAlt,
   FaChevronDown,
   FaHome,
   FaList,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux"; // ✅ Get user from Redux
 import { locationService } from "../service/locationService";
 import { categoryService } from "../service/categoryService";
 
 const Header = () => {
+  const user = useSelector((state) => state.auth.user); // ✅ user state
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLocationPopup, setIsLocationPopup] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -55,7 +56,6 @@ const Header = () => {
       }
     };
 
-    // Uncomment to enable auto-detection
     detectLocation();
   }, []);
 
@@ -69,7 +69,6 @@ const Header = () => {
         const result = await categoryService.getCategories();
 
         if (result.success) {
-          // Don't add "All" category for desktop navigation
           setCategories(result.data);
         } else {
           setCategoriesError(result.error || "Failed to fetch categories");
@@ -259,14 +258,23 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Right - Login and Cart */}
+              {/* Right - Profile/Login and Cart */}
               <div className="flex items-center gap-4">
-                <Link
-                  to="/login"
-                  className="text-lg font-medium text-gray-800 hover:text-green-600"
-                >
-                  Login
-                </Link>
+                {user ? (
+                  <Link
+                    to="/profile"
+                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+                  >
+                    <FaRegUser className="w-5 h-5 text-gray-700" />
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="text-lg font-medium text-gray-800 hover:text-green-600"
+                  >
+                    Login
+                  </Link>
+                )}
 
                 <button
                   onClick={() => setIsCartOpen(true)}
@@ -313,13 +321,22 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* Right - User Icon */}
-              <Link
-                to="/login"
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-              >
-                <FaRegUser className="w-5 h-5 text-gray-700" />
-              </Link>
+              {/* Right - Profile/Login */}
+              {user ? (
+                <Link
+                  to="/profile"
+                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+                >
+                  <FaRegUser className="w-5 h-5 text-gray-700" />
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+                >
+                  <FaRegUser className="w-5 h-5 text-gray-700" />
+                </Link>
+              )}
             </div>
 
             {/* Search Bar */}
@@ -392,9 +409,9 @@ const Header = () => {
             >
               <button className="flex flex-col items-center justify-center text-gray-700">
                 <FaList className="w-6 h-6" />
-                <span className="text-xs mt-1">Categories Of Product</span>
+                <span className="text-xs mt-1">Categories</span>
               </button>
-            </Link>{" "}
+            </Link>
             {/* Search Button */}
             <button className="flex flex-col items-center justify-center text-gray-700">
               <FaSearch className="w-6 h-6" />

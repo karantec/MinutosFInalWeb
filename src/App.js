@@ -1,36 +1,38 @@
-import { Route, Routes } from "react-router-dom";
-
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import PhoneAuth from "./Components/Login/OtpLogin";
+import PrivateRoute from "./Components/store/PrivateRoute";
+import Profile from "./Components/Profile";
 import Header from "./Components/Header/Navbar";
 import Footer from "./Components/Footer/Footer";
-import Home from "./Components/pages/Home";
 
-import SettingsPage from "./Components/shared/Profile";
-import FruitsVegetablesComponent from "./Components/shared/SubCategory";
-import OTPLoginSystem from "./Components/Login/OtpLogin";
-import ProductDetailScreen from "./Components/home/ProductDetail";
-import CategoriesSub from "./Components/home/Category";
-
-const App = () => {
+export default function App() {
   return (
-    <div>
+    <>
+      {/* Always visible */}
       <Header />
 
+      {/* Routes */}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<OTPLoginSystem />} />
-        <Route path="/profile" element={<SettingsPage />} />
-        <Route
-          path="/subCategory/:categoryName"
-          element={<FruitsVegetablesComponent />}
-        />
-        <Route path="/subcategory" element={<CategoriesSub />} />
+        {/* Public Route */}
+        <Route path="/login" element={<PhoneAuth />} />
 
-        <Route path="/product/:id" element={<ProductDetailScreen />} />
+        {/* Protected Route */}
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Default fallback */}
+        <Route path="*" element={<PhoneAuth />} />
       </Routes>
 
+      {/* Always visible */}
       <Footer />
-    </div>
+    </>
   );
-};
-
-export default App;
+}

@@ -3,6 +3,8 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../store/authSlice"; // ✅ import Redux action
 
 export default function PhoneAuth() {
   const [step, setStep] = useState("phone"); // phone | verify
@@ -11,6 +13,7 @@ export default function PhoneAuth() {
   const [message, setMessage] = useState("");
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch(); // ✅ Redux dispatcher
 
   // Phone form
   const phoneForm = useFormik({
@@ -57,11 +60,15 @@ export default function PhoneAuth() {
           "https://backend.minutos.shop/api/auth/verify-otp",
           payload
         );
-        if (res.data) {
-          alert("OTP verified 🎉");
-          navigate("/");
-          console.log("Login success:", res.data);
-          // TODO: redirect to dashboard/home after login
+
+        if (res.data && res.data.token) {
+          // ✅ Save JWT to Redux + localStorage
+          dispatch(login(res.data.token));
+
+          setMessage("OTP verified 🎉");
+          navigate("/profile"); // ✅ Redirect to profile/dashboard
+        } else {
+          setMessage("Login failed ❌");
         }
       } catch (err) {
         setMessage("Invalid OTP ❌");
