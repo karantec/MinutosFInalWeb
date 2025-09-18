@@ -5,7 +5,7 @@ import PrivateRoute from "./Components/store/PrivateRoute";
 import Profile from "./Components/Profile";
 import Header from "./Components/Header/Navbar";
 import Footer from "./Components/Footer/Footer";
-
+import Home from "./Components/pages/Home";
 export default function App() {
   return (
     <>
@@ -16,7 +16,7 @@ export default function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/login" element={<PhoneAuth />} />
-
+        <Route path="/" element={<Home />} />
         {/* Protected Route */}
         <Route
           path="/profile"

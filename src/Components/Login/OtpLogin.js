@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { login } from "../store/authSlice"; // ✅ import Redux action
+import { loginSuccess } from "../store/authSlice";
 
 export default function PhoneAuth() {
   const [step, setStep] = useState("phone"); // phone | verify
@@ -62,11 +62,12 @@ export default function PhoneAuth() {
         );
 
         if (res.data && res.data.token) {
-          // ✅ Save JWT to Redux + localStorage
-          dispatch(login(res.data.token));
+          // ✅ Save JWT + user to Redux
+          dispatch(loginSuccess(res.data));
+          localStorage.setItem("auth", JSON.stringify(res.data));
 
           setMessage("OTP verified 🎉");
-          navigate("/profile"); // ✅ Redirect to profile/dashboard
+          navigate("/profile"); // redirect works now
         } else {
           setMessage("Login failed ❌");
         }

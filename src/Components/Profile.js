@@ -18,7 +18,9 @@ export default function Profile() {
           <h2 className="mt-2 font-semibold text-lg">
             {user?.name || "Guest"}
           </h2>
-          <p className="text-gray-500 text-sm">{user?.phone || "No number"}</p>
+          <p className="text-gray-500 text-sm">
+            {user?.phoneNumber || "No number"}
+          </p>
         </div>
 
         {/* Daily Saver Card */}
