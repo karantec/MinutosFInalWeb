@@ -16,7 +16,7 @@ export default function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/login" element={<PhoneAuth />} />
-        <Route path="/" element={<Home />} />
+        {/* <Route path="/" element={<Home />} /> */}
         {/* Protected Route */}
         <Route
           path="/profile"
@@ -28,7 +28,7 @@ export default function App() {
         />
 
         {/* Default fallback */}
-        <Route path="*" element={<PhoneAuth />} />
+        <Route path="*" element={<Home />} />
       </Routes>
 
       {/* Always visible */}
