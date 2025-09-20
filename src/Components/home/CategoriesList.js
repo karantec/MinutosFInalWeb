@@ -5,7 +5,8 @@ import categoryService from "../service/categoryService";
 import ProductCard from "./ProductCard";
 import ProductCard3 from "./ProductCard3";
 import ChocolatePage from "./ChoclatePage";
-import Mithai from "./Mithai";
+// import Mithai from "./Mithai";
+import ProductCard4 from "./Mithai";
 
 const CategoriesList = () => {
   const [categories, setCategories] = useState([]);
@@ -67,26 +68,30 @@ const CategoriesList = () => {
         {categories.map((category) => (
           <div
             key={category._id}
-            className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+            className="group rounded-lg p-3 transition-shadow cursor-pointer flex flex-col items-center"
           >
-            <div className="aspect-square mb-2 flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden">
-              <Link to={`/subCategory/${encodeURIComponent(category.name)}`}>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:border-red-100 group-hover:shadow-md transition-all duration-200">
+              <Link
+                to={`/subCategory/${encodeURIComponent(category.name)}`}
+                className="w-full h-full flex items-center justify-center"
+              >
                 {category.image ? (
                   <img
                     src={category.image}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-200"
                     alt={category.name}
                     onError={(e) => (e.target.style.display = "none")}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-red-100 text-red-600 text-2xl">
-                    {category.name.charAt(0)}
+                  <div className="text-2xl text-gray-700 font-bold group-hover:text-red-600 transition-colors flex items-center justify-center">
+                    {category.name.charAt(0).toUpperCase()}
                   </div>
                 )}
               </Link>
             </div>
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-800 leading-tight">
+
+            <div className="text-center mt-2">
+              <h3 className="text-xs sm:text-sm font-medium text-gray-800 leading-tight px-1 line-clamp-2">
                 {category.name}
               </h3>
             </div>
@@ -99,7 +104,7 @@ const CategoriesList = () => {
         <ProductCard />
         <ProductCard3 />
         <ChocolatePage />
-        <Mithai />
+        <ProductCard4 />
       </div>
     </section>
   );

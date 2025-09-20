@@ -20,7 +20,7 @@ const HeroArea = () => {
   }, []);
 
   return (
-    <section className="mt-4 md:mt-0 py-10 px-2 md:px-0">
+    <section className="mt-4 md:mt-0 py-2 px-2 md:px-0">
       {banners.map((ad) => (
         <div key={ad.id} className="mb-4">
           <div className="relative w-full overflow-hidden rounded-xl">

@@ -213,7 +213,7 @@ const Header = () => {
               <div className="flex items-center gap-6">
                 {/* Logo */}
                 <Link to="/" className="flex items-center">
-                  <div className="text-2xl text-red-400">Minutos</div>
+                  <div className="text-2xl text-red-400 font-bold">Minutos</div>
                 </Link>
 
                 {/* Location */}
@@ -278,10 +278,12 @@ const Header = () => {
 
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                 >
                   <FaShoppingCart className="w-4 h-4" />
-                  <span className="font-medium">{cartItems.length} items</span>
+                  <span className="font-medium text-white-600">
+                    {cartItems.length} items
+                  </span>
                   <span className="font-medium">₹{cartTotal}</span>
                 </button>
               </div>
