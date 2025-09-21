@@ -1,10 +1,159 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "./store/authSlice";
 
 export default function Profile() {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
+
+  const [activeSection, setActiveSection] = useState("Orders");
+
+  // Dummy Data
+  const dummyOrders = [
+    {
+      id: "ORD12345",
+      date: "20 Sept 2025",
+      status: "Delivered",
+      total: 349,
+      items: ["Amul Milk 1L", "Parle-G Biscuit 500g"],
+    },
+    {
+      id: "ORD12346",
+      date: "18 Sept 2025",
+      status: "Ongoing",
+      total: 220,
+      items: ["Banana 1kg", "Fortune Oil 1L"],
+    },
+  ];
+
+  const dummyAddresses = [
+    {
+      type: "Home",
+      details: "123, MG Road, Ranchi - 834001",
+    },
+    {
+      type: "Office",
+      details: "LetsCode Pvt Ltd, Hinoo, Ranchi",
+    },
+  ];
+
+  const dummySupport = [
+    { id: 1, query: "Order not delivered", status: "Resolved" },
+    { id: 2, query: "Wallet refund not received", status: "Pending" },
+  ];
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case "Orders":
+        return (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">My Orders</h3>
+            <div className="space-y-4">
+              {dummyOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="border rounded-lg p-4 flex justify-between items-start"
+                >
+                  <div>
+                    <p className="font-medium">Order #{order.id}</p>
+                    <p className="text-sm text-gray-500">
+                      {order.date} • {order.status}
+                    </p>
+                    <p className="text-sm mt-1 text-gray-700">
+                      {order.items.join(", ")}
+                    </p>
+                  </div>
+                  <div className="font-semibold">₹{order.total}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "Addresses":
+        return (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Saved Addresses</h3>
+            <div className="space-y-4">
+              {dummyAddresses.map((addr, i) => (
+                <div
+                  key={i}
+                  className="border rounded-lg p-4 flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-semibold">{addr.type}</p>
+                    <p className="text-sm text-gray-600">{addr.details}</p>
+                  </div>
+                  <button className="text-red-500 text-sm font-medium">
+                    Edit
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">
+              Add New Address
+            </button>
+          </div>
+        );
+
+      case "Customer Support":
+        return (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Support Tickets</h3>
+            <div className="space-y-4">
+              {dummySupport.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="border rounded-lg p-4 flex justify-between"
+                >
+                  <p>{ticket.query}</p>
+                  <span
+                    className={`text-sm font-medium ${
+                      ticket.status === "Resolved"
+                        ? "text-green-600"
+                        : "text-yellow-600"
+                    }`}
+                  >
+                    {ticket.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">
+              Raise New Ticket
+            </button>
+          </div>
+        );
+
+      case "Profile":
+        return (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Profile Details</h3>
+            <div className="space-y-2 text-left">
+              <p>
+                <span className="font-medium">Name:</span>{" "}
+                {user?.name || "Guest"}
+              </p>
+              <p>
+                <span className="font-medium">Phone:</span>{" "}
+                {user?.phoneNumber || "N/A"}
+              </p>
+
+              <p>
+                <span className="font-medium">Email:</span>{" "}
+                {user?.email || "guest@example.com"}
+              </p>
+            </div>
+            <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">
+              Edit Profile
+            </button>
+          </div>
+        );
+
+      default:
+        return <p className="text-gray-500">Select a section</p>;
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-6 flex flex-col md:flex-row gap-6">
@@ -22,50 +171,23 @@ export default function Profile() {
             {user?.phoneNumber || "No number"}
           </p>
         </div>
-
-        {/* Daily Saver Card */}
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm font-medium text-red-700">
-            You could potentially save ₹500 per month with Daily Saver
-          </p>
-          <button className="mt-2 bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded font-semibold">
-            Get Daily
-          </button>
-        </div>
-
-        {/* Wallet Section */}
-        <div className="border rounded-lg p-3 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Wallet Balance</span>
-            <span className="text-gray-700">₹{user?.wallet || 0}</span>
-          </div>
-          <button className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded">
-            Add Balance
-          </button>
-        </div>
-
-        {/* Free Cash */}
-        <div className="bg-red-100 border border-red-300 rounded-lg p-3 flex justify-between items-center">
-          <span className="text-red-700 font-medium">Free Cash</span>
-          <span className="font-semibold text-red-800">₹150</span>
-        </div>
-
         {/* Sidebar Menu */}
         <div className="space-y-2">
-          {[
-            "Orders",
-            "Customer Support",
-            "Manage Referrals",
-            "Addresses",
-            "Profile",
-          ].map((item, idx) => (
-            <button
-              key={idx}
-              className="w-full text-left px-3 py-2 rounded hover:bg-red-50 font-medium text-gray-700"
-            >
-              {item}
-            </button>
-          ))}
+          {["Orders", "Customer Support", "Addresses", "Profile"].map(
+            (item, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveSection(item)}
+                className={`w-full text-left px-3 py-2 rounded font-medium ${
+                  activeSection === item
+                    ? "bg-red-100 text-red-700"
+                    : "hover:bg-red-50 text-gray-700"
+                }`}
+              >
+                {item}
+              </button>
+            )
+          )}
         </div>
 
         {/* Logout */}
@@ -78,19 +200,8 @@ export default function Profile() {
       </div>
 
       {/* Right Content */}
-      <div className="flex-1 bg-white shadow rounded-xl p-6 flex flex-col items-center justify-center text-center">
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/4076/4076505.png"
-          alt="No Orders"
-          className="w-20 h-20 mb-4"
-        />
-        <h3 className="text-lg font-semibold">No orders yet</h3>
-        <p className="text-sm text-gray-500 mb-3">
-          Browse products and add them to your cart
-        </p>
-        <button className="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">
-          Browse Products
-        </button>
+      <div className="flex-1 bg-white shadow rounded-xl p-6">
+        {renderSection()}
       </div>
     </div>
   );

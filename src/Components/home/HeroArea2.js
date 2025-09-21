@@ -10,7 +10,7 @@ const HeroArea2 = () => {
         const data = await fetchAds();
         if (data?.success) {
           // you can include multiple banners if you want
-          setBanners([{ id: 1, banner: data.banner.homeBanner1 }]);
+          setBanners([{ id: 2, banner: data.banner.homeBanner2 }]);
         }
       } catch (err) {
         console.error("Error loading hero banners:", err);
