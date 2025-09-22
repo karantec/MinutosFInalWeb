@@ -28,7 +28,7 @@ const Header = () => {
   const user = useSelector((state) => state.auth.user);
   const cartItems = useSelector((state) => state.cart.cartItems);
   const cartLoading = useSelector((state) => state.cart.loading);
-  const [selectedSlot, setSelectedSlot] = useState("30");
+  const [selectedSlot, setSelectedSlot] = useState("Instant Delivery");
 
   const cartTotal = cartItems.reduce(
     (total, item) => total + (item.price || 0) * (item.quantity || 0),
@@ -386,6 +386,7 @@ const Header = () => {
                   onChange={(e) => setSelectedSlot(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 >
+                  <option value="30">Instant Delivery</option>
                   <option value="30">Within 30 minutes</option>
                   <option value="60">Within 1 hour</option>
                   <option value="120">Within 2 hours</option>
