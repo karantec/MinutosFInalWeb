@@ -28,6 +28,7 @@ const Header = () => {
   const user = useSelector((state) => state.auth.user);
   const cartItems = useSelector((state) => state.cart.cartItems);
   const cartLoading = useSelector((state) => state.cart.loading);
+  const [selectedSlot, setSelectedSlot] = useState("30");
 
   const cartTotal = cartItems.reduce(
     (total, item) => total + (item.price || 0) * (item.quantity || 0),
@@ -378,6 +379,19 @@ const Header = () => {
                 <span className="text-sm font-medium">
                   🚚 Delivery in 15 minutes
                 </span>
+              </div>
+              <div className="mb-4">
+                <select
+                  value={selectedSlot}
+                  onChange={(e) => setSelectedSlot(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="30">Within 30 minutes</option>
+                  <option value="60">Within 1 hour</option>
+                  <option value="120">Within 2 hours</option>
+                  <option value="180">Within 3 hours</option>
+                  <option value="later">Schedule for later</option>
+                </select>
               </div>
               <div className="flex justify-between items-center mb-4">
                 <span className="font-medium">Subtotal:</span>
