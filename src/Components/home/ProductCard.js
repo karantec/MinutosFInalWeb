@@ -276,7 +276,7 @@ const ProductCard = () => {
 
   return (
     <>
-      <HeroArea />
+      {/* <HeroArea /> */}
       <section className="px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
