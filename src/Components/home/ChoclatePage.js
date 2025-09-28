@@ -18,6 +18,7 @@ import {
   updateCartItemAsync,
   removeFromCartAsync,
 } from "../store/cartSlice";
+import HeroArea3 from "./HeroArea3";
 
 const ChocolatePage = () => {
   const dispatch = useDispatch();
@@ -275,7 +276,7 @@ const ChocolatePage = () => {
 
   return (
     <>
-      <HeroArea4 />
+      <HeroArea3 />
       <section className="px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-bold text-xl sm:text-2xl text-gray-900">

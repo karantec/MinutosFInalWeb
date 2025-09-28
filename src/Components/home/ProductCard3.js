@@ -18,6 +18,7 @@ import {
   updateCartItemAsync,
   removeFromCartAsync,
 } from "../store/cartSlice";
+import HeroArea2 from "./HeroArea2";
 
 const MorningFresh = () => {
   const dispatch = useDispatch();
@@ -275,7 +276,7 @@ const MorningFresh = () => {
 
   return (
     <>
-      <HeroArea4 />
+      <HeroArea2 />
       <section className="px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
