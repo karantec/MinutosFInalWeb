@@ -14,6 +14,7 @@ import { useAppDispatch } from "./Components/hooks/useAppDispatch";
 import CheckoutPage from "./Components/cart/Checkout";
 import PaymentPage from "./Components/cart/Payment";
 import ScrollToTop from "./Components/utils/ScrollTop";
+import CategoriesSub from "./Components/home/Category";
 
 // ✅ Utility to get JWT expiry
 function getTokenExpiry(token) {
@@ -102,6 +103,7 @@ export default function App() {
           path="/subCategory/:categoryName"
           element={<FruitsVegetablesComponent />}
         />
+        <Route path="/subcategory" element={<CategoriesSub />} />
         <Route path="/product/:id" element={<ProductDetailScreen />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/payment" element={<PaymentPage />} />
