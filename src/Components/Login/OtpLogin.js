@@ -29,7 +29,7 @@ export default function PhoneAuth() {
       try {
         const payload = { phoneNumber: `+91${values.phone}` };
         const res = await axios.post(
-          "https://backend.minutos.shop/api/auth/send-otp",
+          "https://minutosa-3.onrender.com/api/auth/send-otp",
           payload
         );
         if (res.data) {
@@ -57,7 +57,7 @@ export default function PhoneAuth() {
       try {
         const payload = { phoneNumber, otp: values.otp };
         const res = await axios.post(
-          "https://backend.minutos.shop/api/auth/verify-otp",
+          "https://minutosa-3.onrender.com/api/auth/verify-otp",
           payload
         );
 
@@ -95,12 +95,12 @@ export default function PhoneAuth() {
     setMessage("");
     try {
       const res = await axios.post(
-        "https://backend.minutos.shop/api/auth/resend-otp",
+        "https://minutosa-3.onrender.com/api/auth/resend-otp",
         { phoneNumber }
       );
       if (res.data) {
         setMessage("OTP resent successfully 🔄");
-      }
+      
     } catch (err) {
       setMessage("Failed to resend OTP ❌");
     } finally {
