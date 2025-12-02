@@ -141,13 +141,17 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="bg-gray-100 py-8">
         <div className="max-w-6xl mx-auto px-6">
+          {/* TOP FOOTER */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-gray-800 tracking-tight">
-                minutos
-              </span>
+              <img
+                src="minitos.png"
+                alt="Minutos Logo"
+                className="h-8 w-auto mr-3"
+              />
+
               <span className="ml-4 text-sm text-gray-500">
-                © Minutos Marketplace Private Limited
+                © Minutos Technologies India Pvt. Ltd.
               </span>
             </div>
 
@@ -191,6 +195,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* MID FOOTER */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex flex-wrap gap-4">
@@ -232,6 +237,7 @@ const Footer = () => {
                 </Link>
               </div>
 
+              {/* Download App */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <h4 className="font-bold text-sm text-gray-800">
                   Download App
@@ -252,6 +258,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* SOCIAL ICONS */}
           <div className="mt-6 flex justify-center md:justify-start">
             <div className="flex gap-4">
               <div className="cursor-pointer w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 transition-colors">
