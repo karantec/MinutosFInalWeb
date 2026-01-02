@@ -15,7 +15,7 @@ const Home = () => {
   }));
 
   return (
-    <div className="_container">
+    <div className="_container mt-3">
       <HeroArea />
       <FeaturedPromo />
       <CategoriesList />
