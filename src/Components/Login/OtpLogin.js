@@ -28,7 +28,7 @@ export default function PhoneAuth() {
       try {
         const payload = { phoneNumber: `+91${values.phone}` };
         const res = await axios.post(
-          "https://minutosa-3.onrender.com/api/auth/send-otp",
+          "https://api.minutos.in/api/auth/send-otp",
           payload
         );
 
@@ -56,7 +56,7 @@ export default function PhoneAuth() {
       try {
         const payload = { phoneNumber, otp: values.otp };
         const res = await axios.post(
-          "https://minutosa-3.onrender.com/api/auth/verify-otp",
+          "https://api.minutos.in/api/auth/verify-otp",
           payload
         );
 
@@ -89,7 +89,7 @@ export default function PhoneAuth() {
     setMessage("");
     try {
       const res = await axios.post(
-        "https://minutosa-3.onrender.com/api/auth/resend-otp",
+        "https://api.minutos.in/api/auth/resend-otp",
         { phoneNumber }
       );
 

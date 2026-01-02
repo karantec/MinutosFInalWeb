@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://backend.minutos.shop/api/product";
+const API_BASE_URL = "https://api.minutos.in/api/product";
 
 const productService = {
   getProductsBySubCategories: async (subCategoryIds) => {
