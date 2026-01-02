@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://backend.minutos.shop/api/category";
+const API_URL = "https://api.minutos.in/api/category";
 
 const getSubCategories = async (categoryName) => {
   try {

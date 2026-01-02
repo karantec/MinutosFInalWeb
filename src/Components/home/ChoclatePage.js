@@ -253,7 +253,7 @@ const ChocolatePage = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          "https://backend.minutos.shop/api/product/subcategories?subCategories=68c31d5843f5a67c5b62b075"
+          "https://api.minutos.in/api/product/subcategories?subCategories=68c31d5843f5a67c5b62b075"
         );
         setProducts(res.data.data || []);
       } catch (err) {

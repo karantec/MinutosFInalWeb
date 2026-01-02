@@ -58,11 +58,9 @@ export default function ProductDetailScreen() {
     setLoading(true);
 
     Promise.all([
+      axios.get(`https://api.minutos.in/api/product/${id}`).catch(() => null),
       axios
-        .get(`https://backend.minutos.shop/api/product/${id}`)
-        .catch(() => null),
-      axios
-        .get(`https://backend.minutos.shop/api/product?limit=20`)
+        .get(`https://api.minutos.in/api/product?limit=20`)
         .catch(() => null),
     ])
       .then(([productRes, productsRes]) => {

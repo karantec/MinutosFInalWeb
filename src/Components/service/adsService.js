@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://backend.minutos.shop/api/ads/get";
+const API_URL = "https://api.minutos.in/api/ads/get";
 
 // Get all ads
 export const fetchAds = async () => {

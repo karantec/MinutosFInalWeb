@@ -2,13 +2,13 @@
 
 // Use env variable if available, otherwise fallback to default
 const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "https://backend.minutos.shop/api";
-
+  process.env.REACT_APP_API_BASE_URL || "https://api.minutos.in/api";
+//api.minutos.in/api/category/categories
 export const categoryService = {
   // ✅ Get all categories (simple list)
   getCategories: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/category/getcategories`, {
+      const response = await fetch(`${API_BASE_URL}/category/categories`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -41,7 +41,7 @@ export const categoryService = {
   getCategoriesWithSubcategories: async () => {
     try {
       const response = await fetch(
-        `https://backend.minutos.shop/api/subcategory/categories-with-subcategories`,
+        `https://api.minutos.in/api/subcategory/categories-with-subcategories`,
         {
           method: "GET",
           headers: {

@@ -1,5 +1,5 @@
 // Complete cartService.js file
-const API_BASE_URL = "https://backend.minutos.shop"; // Adjust if needed
+const API_BASE_URL = "https://api.minutos.in"; // Adjust if needed
 
 const cartService = {
   // ✅ Get cart - supports the URL pattern your frontend uses
