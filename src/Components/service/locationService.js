@@ -1,10 +1,12 @@
 // services/locationService.js
 
 export const locationService = {
+  // 1️⃣ Get current user location + address
   async getUserLocationWithAddress() {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
         resolve({ success: false, error: "Geolocation not supported" });
+        return;
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -14,24 +16,23 @@ export const locationService = {
             lng: position.coords.longitude,
           };
 
-          // Example reverse geocode API call (OpenStreetMap)
           try {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?lat=${coords.lat}&lon=${coords.lng}&format=json`
             );
             const data = await response.json();
 
+            const location = {
+              formatted: data.display_name,
+              full: data.display_name,
+              coordinates: coords,
+            };
+
             resolve({
               success: true,
-              location: {
-                coordinates: coords,
-                address: {
-                  formatted: data.display_name,
-                  full: data.display_name,
-                },
-              },
+              location,
             });
-          } catch (err) {
+          } catch (error) {
             resolve({ success: false, error: "Failed to fetch address" });
           }
         },
@@ -42,13 +43,16 @@ export const locationService = {
     });
   },
 
+  // 2️⃣ Save location in localStorage
   saveLocationToStorage(location) {
     try {
       let locations = JSON.parse(localStorage.getItem("recentLocations")) || [];
+
       locations = [
         location,
         ...locations.filter((l) => l.formatted !== location.formatted),
       ];
+
       localStorage.setItem(
         "recentLocations",
         JSON.stringify(locations.slice(0, 5))
@@ -58,7 +62,8 @@ export const locationService = {
     }
   },
 
-  getRecentLocations() {
+  // 3️⃣ Get saved locations (USED IN detectLocation)
+  getSavedLocation() {
     try {
       return JSON.parse(localStorage.getItem("recentLocations")) || [];
     } catch {
@@ -66,6 +71,7 @@ export const locationService = {
     }
   },
 
+  // 4️⃣ Search location by text
   async searchLocations(query) {
     try {
       const response = await fetch(
@@ -74,15 +80,19 @@ export const locationService = {
         )}`
       );
       const data = await response.json();
+
       return {
         success: true,
         data: data.map((loc) => ({
           formatted: loc.display_name,
           full: loc.display_name,
-          coordinates: { lat: loc.lat, lng: loc.lon },
+          coordinates: {
+            lat: loc.lat,
+            lng: loc.lon,
+          },
         })),
       };
-    } catch (err) {
+    } catch {
       return { success: false, error: "Search failed" };
     }
   },

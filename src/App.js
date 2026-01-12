@@ -19,6 +19,7 @@ import StoreSelector from "./Components/NearByStore/NearByStore";
 import PaymentCheckout from "./Components/Payment/Payment";
 import ThankYouPage from "./Components/Delievery/OrderDelierery";
 import VendorRegistrationForm from "./Components/Vendor/Registration";
+import DeliveryRegistration from "./Components/Delievery/DelierveryRegistration";
 
 // ✅ Utility to get JWT expiry
 function getTokenExpiry(token) {
@@ -114,6 +115,10 @@ export default function App() {
         <Route path="/sell" element={<VendorRegistrationForm />} />
         <Route path="/nearByStore" element={<StoreSelector />} />
         <Route path="/delievery" element={<ThankYouPage />} />
+        <Route
+          path="/delieveryRegistration"
+          element={<DeliveryRegistration />}
+        />
         {/* Default fallback */}
         <Route path="*" element={<Home />} />
       </Routes>
