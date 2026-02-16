@@ -25,6 +25,7 @@ import {
 
 const Header = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const cartItems = useSelector((state) => state.cart.cartItems);
   const cartLoading = useSelector((state) => state.cart.loading);
@@ -32,7 +33,7 @@ const Header = () => {
 
   const cartTotal = cartItems.reduce(
     (total, item) => total + (item.price || 0) * (item.quantity || 0),
-    0
+    0,
   );
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -53,8 +54,6 @@ const Header = () => {
   });
   const [locationLoading, setLocationLoading] = useState(false);
   const [updatingItems, setUpdatingItems] = useState(new Set());
-
-  const navigate = useNavigate();
 
   // Manual location detection function
   const detectLocationManually = async () => {
@@ -77,7 +76,7 @@ const Header = () => {
       } else {
         console.log("Manual location detection failed:", result);
         alert(
-          "Unable to detect your location. Please enter manually or check permissions."
+          "Unable to detect your location. Please enter manually or check permissions.",
         );
       }
     } catch (error) {
@@ -173,7 +172,7 @@ const Header = () => {
           userId: user.userId,
           productId: itemId,
           quantity: newQuantity,
-        })
+        }),
       ).unwrap();
 
       console.log("Update success:", result);
@@ -213,7 +212,7 @@ const Header = () => {
           userId: user.userId,
           productId: itemId,
           quantity: newQuantity,
-        })
+        }),
       ).unwrap();
 
       console.log("Update success:", result);
@@ -242,7 +241,7 @@ const Header = () => {
         removeFromCartAsync({
           userId: user.userId,
           productId: itemId,
-        })
+        }),
       ).unwrap();
 
       dispatch(fetchCartAsync(user.userId));
@@ -465,7 +464,7 @@ const Header = () => {
               className="w-full border px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               onChange={(e) => {
                 setSelectedLocation(
-                  e.target.value || "Mumbai Central, Mumbai, Maharashtra"
+                  e.target.value || "Mumbai Central, Mumbai, Maharashtra",
                 );
                 if (e.target.value) {
                   locationService.saveLocationToStorage(e.target.value);
@@ -504,8 +503,12 @@ const Header = () => {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between py-4">
               <div className="flex items-center gap-6">
-                <Link to="/" className="flex items-center">
-                  <div className="text-2xl text-red-400 font-bold">Minutos</div>
+                <Link to="/" className="flex items-center gap-2">
+                  <img
+                    src="https://www.minutos.in/minitos.png"
+                    alt="Minutos Logo"
+                    className="w-15 h-8 object-contain"
+                  />
                 </Link>
                 <div
                   className="flex items-center cursor-pointer"
@@ -577,35 +580,36 @@ const Header = () => {
           </div>
 
           {/* Desktop Categories Navigation */}
-          <nav className="bg-white border-t border-gray-100">
+          <div className="border-t border-gray-200">
             <div className="max-w-7xl mx-auto px-4">
               {categoriesError && !categoriesLoading && (
-                <div className="text-center py-2">
-                  <p className="text-sm text-red-600">
-                    Failed to load categories.
-                  </p>
+                <div className="text-red-500 p-4">
+                  Failed to load categories.
                 </div>
               )}
-              <div className="flex items-center justify-start py-3 overflow-x-auto scrollbar-hide">
-                {categoriesLoading ? (
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <FaSpinner className="animate-spin w-4 h-4" />
-                    <span className="text-sm">Loading categories...</span>
-                  </div>
-                ) : (
-                  categories.map((category) => (
-                    <Link
-                      key={category._id}
-                      to={`/category/${category._id}`}
-                      className="flex-shrink-0 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors duration-200 whitespace-nowrap px-4 py-2 mx-1 rounded-md hover:bg-gray-50"
+
+              {categoriesLoading ? (
+                <div className="p-4 text-gray-500">Loading categories...</div>
+              ) : (
+                <div className="flex items-center gap-6 py-3 overflow-x-auto">
+                  {categories.map((category) => (
+                    <div
+                      key={category.id}
+                      className="cursor-pointer hover:text-red-600 transition-colors whitespace-nowrap text-sm font-medium text-gray-700"
+                      onClick={() => {
+                        // Navigate to subcategory page with URL-encoded category name
+                        navigate(
+                          `/subCategory/${encodeURIComponent(category.name)}`,
+                        );
+                      }}
                     >
                       {category.name}
-                    </Link>
-                  ))
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </nav>
+          </div>
         </div>
 
         {/* Mobile Header */}
@@ -613,7 +617,11 @@ const Header = () => {
           <div className="flex items-center justify-between p-4">
             {/* Left: Logo */}
             <Link to="/" className="flex items-center">
-              <div className="text-xl text-red-400 font-bold">Minutos</div>
+              <img
+                src="https://www.minutos.in/minitos.png"
+                alt="Minutos Logo"
+                className="w-8 h-8 object-contain"
+              />
             </Link>
 
             {/* Right: User & Cart */}

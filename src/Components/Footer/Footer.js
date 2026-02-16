@@ -145,7 +145,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center">
               <img
-                src="minitos.png"
+                src="https://www.minutos.in/minitos.png"
                 alt="Minutos Logo"
                 className="h-8 w-auto mr-3"
               />

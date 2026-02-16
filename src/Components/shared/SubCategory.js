@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Star, Search } from "lucide-react";
+import { Star, Search, Package } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import subcategoryService from "../service/subcategoryService";
-import productService from "../service/productService"; // Import the new service
+import productService from "../service/productService";
 
 import { Clock, Plus } from "lucide-react";
 
@@ -12,6 +12,7 @@ const FruitsVegetablesComponent = () => {
   const [selectedCategory, setSelectedCategory] = useState({
     _id: "All",
     name: "All",
+    showIcon: true, // Flag to show icon instead of image
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
@@ -24,22 +25,24 @@ const FruitsVegetablesComponent = () => {
       try {
         setError(null);
         const decodedCategoryName = decodeURIComponent(categoryName);
-        const result = await subcategoryService.getSubCategories(
-          decodedCategoryName
-        );
+        const result =
+          await subcategoryService.getSubCategories(decodedCategoryName);
 
         if (result.success) {
-          setSubCategories([{ _id: "All", name: "All" }, ...result.data]);
+          setSubCategories([
+            { _id: "All", name: "All", showIcon: true },
+            ...result.data,
+          ]);
         } else {
-          setSubCategories([{ _id: "All", name: "All" }]);
+          setSubCategories([{ _id: "All", name: "All", showIcon: true }]);
         }
-        setSelectedCategory({ _id: "All", name: "All" });
+        setSelectedCategory({ _id: "All", name: "All", showIcon: true });
         setProducts([]);
       } catch (error) {
         console.error("Error fetching subcategories:", error);
         setError("Failed to load subcategories");
-        setSubCategories([{ _id: "All", name: "All" }]);
-        setSelectedCategory({ _id: "All", name: "All" });
+        setSubCategories([{ _id: "All", name: "All", showIcon: true }]);
+        setSelectedCategory({ _id: "All", name: "All", showIcon: true });
         setProducts([]);
       }
     };
@@ -50,24 +53,52 @@ const FruitsVegetablesComponent = () => {
   // Fetch products when selected category changes
   useEffect(() => {
     const fetchProducts = async () => {
-      if (selectedCategory._id === "All") {
-        setProducts([]);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
 
-        const result = await productService.getProductsBySubCategories(
-          selectedCategory._id
-        );
+        if (selectedCategory._id === "All") {
+          // ✅ FIX: Fetch products from ALL subcategories (excluding the "All" placeholder)
+          const realSubCategories = subCategories.filter(
+            (sub) => sub._id !== "All",
+          );
 
-        if (result.success) {
-          setProducts(result.data);
+          if (realSubCategories.length === 0) {
+            setProducts([]);
+            setLoading(false);
+            return;
+          }
+
+          // Fetch products for all subcategories in parallel
+          const results = await Promise.all(
+            realSubCategories.map((sub) =>
+              productService.getProductsBySubCategories(sub._id),
+            ),
+          );
+
+          // Merge all products from all subcategories
+          const allProducts = results
+            .filter((result) => result.success)
+            .flatMap((result) => result.data);
+
+          // Remove duplicates by _id
+          const unique = Array.from(
+            new Map(allProducts.map((p) => [p._id, p])).values(),
+          );
+
+          setProducts(unique);
         } else {
-          setError("Failed to load products");
-          setProducts([]);
+          // Fetch products for a specific subcategory
+          const result = await productService.getProductsBySubCategories(
+            selectedCategory._id,
+          );
+
+          if (result.success) {
+            setProducts(result.data);
+          } else {
+            setError("Failed to load products");
+            setProducts([]);
+          }
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -78,10 +109,13 @@ const FruitsVegetablesComponent = () => {
       }
     };
 
-    fetchProducts();
-  }, [selectedCategory]);
+    // Only run if subCategories are loaded (to avoid fetching "All" before we know the subs)
+    if (subCategories.length > 0) {
+      fetchProducts();
+    }
+  }, [selectedCategory, subCategories]);
 
-  // Filter products by search - updated to match new response structure
+  // Filter products by search
   const filteredProducts = products.filter(
     (product) =>
       searchQuery === "" ||
@@ -90,7 +124,7 @@ const FruitsVegetablesComponent = () => {
       (product.more_details?.brand &&
         product.more_details.brand
           .toLowerCase()
-          .includes(searchQuery.toLowerCase()))
+          .includes(searchQuery.toLowerCase())),
   );
 
   const ProductCard = ({ product }) => {
@@ -108,19 +142,17 @@ const FruitsVegetablesComponent = () => {
     };
 
     const handleAddToCart = (e) => {
-      e.stopPropagation(); // Prevent navigation when clicking ADD
+      e.stopPropagation();
       console.log("Add to cart:", product._id);
-      // Add your cart logic here
     };
 
-    // Calculate discount percentage
     const discount =
       product.originalPrice && (product.discountedMRP || product.price)
         ? Math.round(
             ((product.originalPrice -
               (product.discountedMRP || product.price)) /
               product.originalPrice) *
-              100
+              100,
           )
         : 0;
 
@@ -129,14 +161,12 @@ const FruitsVegetablesComponent = () => {
         onClick={handleNavigate}
         className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 cursor-pointer relative w-full"
       >
-        {/* Discount Badge */}
         {discount > 0 && (
           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded text-[10px] z-10">
             {discount}% OFF
           </div>
         )}
 
-        {/* Delivery Time Badge */}
         <div className="flex items-center gap-1 mb-2">
           <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-500" />
           <span className="text-[10px] sm:text-xs text-gray-500 font-medium">
@@ -144,7 +174,6 @@ const FruitsVegetablesComponent = () => {
           </span>
         </div>
 
-        {/* Product Image Container */}
         <div className="relative mb-3 rounded-lg p-2 h-32 sm:h-36 flex items-center justify-center">
           <img
             src={
@@ -159,7 +188,6 @@ const FruitsVegetablesComponent = () => {
           />
         </div>
 
-        {/* Product Info */}
         <div className="space-y-1.5">
           <h3 className="text-xs sm:text-sm font-medium text-gray-900 leading-tight overflow-hidden line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
             {product.productName || product.name}
@@ -169,7 +197,6 @@ const FruitsVegetablesComponent = () => {
             {product.unit || product.pack}
           </p>
 
-          {/* Price and Add Button */}
           <div className="flex items-center justify-between pt-1">
             <div className="flex flex-col">
               <div className="flex items-center gap-1">
@@ -182,12 +209,6 @@ const FruitsVegetablesComponent = () => {
                   </span>
                 )}
               </div>
-              {/* Savings display */}
-              {product.amountSaving && (
-                <span className="text-[10px] text-green-600 font-medium">
-                  SAVE ₹{product.amountSaving}
-                </span>
-              )}
             </div>
 
             <button
@@ -256,12 +277,32 @@ const FruitsVegetablesComponent = () => {
                       : "text-gray-700 hover:bg-gray-50 border-2 border-transparent"
                   }`}
                 >
-                  <div className="w-8 h-8 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {sub.image && (
+                  <div
+                    className={`w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                      sub.showIcon || !sub.image ? "bg-gray-100" : ""
+                    }`}
+                  >
+                    {sub.showIcon || sub._id === "All" ? (
+                      <Package
+                        className={`w-5 h-5 ${
+                          selectedCategory._id === sub._id
+                            ? "text-red-500"
+                            : "text-gray-600"
+                        }`}
+                      />
+                    ) : sub.image ? (
                       <img
                         src={sub.image}
                         alt={sub.name}
                         className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <Package
+                        className={`w-5 h-5 ${
+                          selectedCategory._id === sub._id
+                            ? "text-red-500"
+                            : "text-gray-600"
+                        }`}
                       />
                     )}
                   </div>
@@ -288,37 +329,39 @@ const FruitsVegetablesComponent = () => {
             {/* Products Grid */}
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-16 border-b-2 border-red-600"></div>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => (
                   <div key={product._id} className="h-full">
                     <ProductCard product={product} />
                   </div>
                 ))}
               </div>
-            ) : selectedCategory._id !== "All" ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="text-gray-400 mb-4">
-                  <Search className="w-16 h-16 mx-auto" />
+            ) : (
+              !loading && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-4">
+                    <Search className="w-16 h-16 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No products found
+                  </h3>
+                  <p className="text-gray-500">
+                    Try adjusting your search or filter criteria
+                  </p>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="mt-4 text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Clear search
+                    </button>
+                  )}
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No products found
-                </h3>
-                <p className="text-gray-500">
-                  Try adjusting your search or filter criteria
-                </p>
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="mt-4 text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Clear search
-                  </button>
-                )}
-              </div>
-            ) : null}
+              )
+            )}
           </div>
         </div>
       </div>
