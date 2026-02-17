@@ -620,7 +620,7 @@ const Header = () => {
               <img
                 src="https://www.minutos.in/minitos.png"
                 alt="Minutos Logo"
-                className="w-8 h-8 object-contain"
+                className="h-8 sm:h-10 md:h-12 w-auto object-contain"
               />
             </Link>
 
