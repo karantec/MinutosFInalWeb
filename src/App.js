@@ -94,16 +94,15 @@ export default function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/login" element={<PhoneAuth />} />
-
-        {/* Protected Routes */}
-        {/* <Route
+        Protected Routes
+        <Route
           path="/profile"
           element={
             <PrivateRoute>
               <Profile />
             </PrivateRoute>
           }
-        /> */}
+        />
         <Route
           path="/subCategory/:categoryName"
           element={<FruitsVegetablesComponent />}
@@ -114,7 +113,7 @@ export default function App() {
         <Route path="/payment" element={<PaymentCheckout />} />
         <Route path="/sell" element={<VendorRegistrationForm />} />
         <Route path="/nearByStore" element={<StoreSelector />} />
-        <Route path="/delievery" element={<ThankYouPage />} />
+        {/* <Route path="/delievery" element={<ThankYouPage />} /> */}
         <Route
           path="/delieveryRegistration"
           element={<DeliveryRegistration />}

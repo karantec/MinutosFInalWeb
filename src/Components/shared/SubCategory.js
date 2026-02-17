@@ -1,23 +1,181 @@
 import React, { useState, useEffect } from "react";
-import { Star, Search, Package } from "lucide-react";
+import { Search, Package } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import subcategoryService from "../service/subcategoryService";
 import productService from "../service/productService";
+import {
+  addToCartAsync,
+  fetchCartAsync,
+  updateCartItemAsync,
+  removeFromCartAsync,
+} from "../store/cartSlice";
 
-import { Clock, Plus } from "lucide-react";
+import { Clock, Plus, Minus, Trash2 } from "lucide-react";
+import { useAppDispatch } from "../hooks/useAppDispatch";
+import { useSelector } from "react-redux";
 
 const FruitsVegetablesComponent = () => {
   const { categoryName } = useParams();
+  const dispatch = useAppDispatch();
+
+  const { user } = useSelector((state) => state.auth || {});
+  const cartItems = useSelector((state) => state.cart.cartItems || []);
+
   const [subCategories, setSubCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState({
     _id: "All",
     name: "All",
-    showIcon: true, // Flag to show icon instead of image
+    showIcon: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [addingProductId, setAddingProductId] = useState(null);
+  const [updatingProducts, setUpdatingProducts] = useState(new Set());
+
+  // Ensure cart is fetched when user logs in
+  useEffect(() => {
+    if (user?.userId && cartItems.length === 0) {
+      dispatch(fetchCartAsync(user.userId));
+    }
+  }, [user, dispatch, cartItems.length]);
+
+  // Helper: find cart item by product ID
+  const findCartItem = (productId) => {
+    return cartItems.find(
+      (item) =>
+        item.productId === productId ||
+        item._id === productId ||
+        item.product?._id === productId,
+    );
+  };
+
+  // Add to cart
+  const handleAddToCart = async (product, e) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please login first!");
+      return;
+    }
+
+    setAddingProductId(product._id);
+    try {
+      const existingCartItem = findCartItem(product._id);
+
+      if (existingCartItem) {
+        await dispatch(
+          updateCartItemAsync({
+            userId: user.userId,
+            productId: product._id,
+            cartItemId: existingCartItem._id,
+            quantity: existingCartItem.quantity + 1,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          addToCartAsync({
+            userId: user.userId,
+            productId: product._id,
+            quantity: 1,
+          }),
+        ).unwrap();
+      }
+
+      setTimeout(() => {
+        dispatch(fetchCartAsync(user.userId));
+      }, 500);
+    } catch (err) {
+      console.error("Cart operation failed:", err);
+      alert("Failed to update cart. Please try again.");
+    } finally {
+      setAddingProductId(null);
+    }
+  };
+
+  // Increase quantity
+  const handleIncreaseQuantity = async (product, e) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please login first!");
+      return;
+    }
+
+    const cartItem = findCartItem(product._id);
+    if (!cartItem) return;
+
+    setUpdatingProducts((prev) => new Set(prev).add(product._id));
+    try {
+      await dispatch(
+        updateCartItemAsync({
+          userId: user.userId,
+          productId: product._id,
+          cartItemId: cartItem._id,
+          quantity: cartItem.quantity + 1,
+        }),
+      ).unwrap();
+
+      setTimeout(() => {
+        dispatch(fetchCartAsync(user.userId));
+      }, 500);
+    } catch (err) {
+      console.error("Failed to increase quantity:", err);
+      alert("Failed to update quantity. Please try again.");
+    } finally {
+      setUpdatingProducts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(product._id);
+        return newSet;
+      });
+    }
+  };
+
+  // Decrease quantity / remove
+  const handleDecreaseQuantity = async (product, e) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please login first!");
+      return;
+    }
+
+    const cartItem = findCartItem(product._id);
+    if (!cartItem) return;
+
+    setUpdatingProducts((prev) => new Set(prev).add(product._id));
+    try {
+      if (cartItem.quantity <= 1) {
+        await dispatch(
+          removeFromCartAsync({
+            userId: user.userId,
+            cartItemId: cartItem._id,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          updateCartItemAsync({
+            userId: user.userId,
+            productId: product._id,
+            cartItemId: cartItem._id,
+            quantity: cartItem.quantity - 1,
+          }),
+        ).unwrap();
+      }
+
+      setTimeout(() => {
+        dispatch(fetchCartAsync(user.userId));
+      }, 500);
+    } catch (err) {
+      console.error("Failed to decrease quantity:", err);
+      alert("Failed to update quantity. Please try again.");
+    } finally {
+      setUpdatingProducts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(product._id);
+        return newSet;
+      });
+    }
+  };
 
   // Fetch subcategories
   useEffect(() => {
@@ -58,7 +216,6 @@ const FruitsVegetablesComponent = () => {
         setError(null);
 
         if (selectedCategory._id === "All") {
-          // ✅ FIX: Fetch products from ALL subcategories (excluding the "All" placeholder)
           const realSubCategories = subCategories.filter(
             (sub) => sub._id !== "All",
           );
@@ -69,26 +226,22 @@ const FruitsVegetablesComponent = () => {
             return;
           }
 
-          // Fetch products for all subcategories in parallel
           const results = await Promise.all(
             realSubCategories.map((sub) =>
               productService.getProductsBySubCategories(sub._id),
             ),
           );
 
-          // Merge all products from all subcategories
           const allProducts = results
             .filter((result) => result.success)
             .flatMap((result) => result.data);
 
-          // Remove duplicates by _id
           const unique = Array.from(
             new Map(allProducts.map((p) => [p._id, p])).values(),
           );
 
           setProducts(unique);
         } else {
-          // Fetch products for a specific subcategory
           const result = await productService.getProductsBySubCategories(
             selectedCategory._id,
           );
@@ -109,7 +262,6 @@ const FruitsVegetablesComponent = () => {
       }
     };
 
-    // Only run if subCategories are loaded (to avoid fetching "All" before we know the subs)
     if (subCategories.length > 0) {
       fetchProducts();
     }
@@ -141,11 +293,6 @@ const FruitsVegetablesComponent = () => {
       navigate(`/product/${product._id}`);
     };
 
-    const handleAddToCart = (e) => {
-      e.stopPropagation();
-      console.log("Add to cart:", product._id);
-    };
-
     const discount =
       product.originalPrice && (product.discountedMRP || product.price)
         ? Math.round(
@@ -155,6 +302,10 @@ const FruitsVegetablesComponent = () => {
               100,
           )
         : 0;
+
+    const cartItem = findCartItem(product._id);
+    const isInCart = !!cartItem;
+    const cartQuantity = cartItem?.quantity || 0;
 
     return (
       <div
@@ -211,13 +362,55 @@ const FruitsVegetablesComponent = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleAddToCart}
-              className="bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 font-bold text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-colors duration-200 flex items-center gap-1"
-            >
-              <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              ADD
-            </button>
+            {/* ✅ Dynamic Cart Button with Quantity Controls */}
+            {!isInCart ? (
+              // ADD Button (when not in cart)
+              <button
+                disabled={addingProductId === product._id}
+                onClick={(e) => handleAddToCart(product, e)}
+                className="bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 font-bold text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-colors duration-200 flex items-center gap-1 min-w-[60px] justify-center"
+              >
+                {addingProductId === product._id ? (
+                  "Adding..."
+                ) : (
+                  <>
+                    <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                    ADD
+                  </>
+                )}
+              </button>
+            ) : (
+              // Quantity Controls (when in cart)
+              <div className="flex items-center border-2 border-red-500 rounded-lg bg-red-50">
+                <button
+                  onClick={(e) => handleDecreaseQuantity(product, e)}
+                  disabled={updatingProducts.has(product._id)}
+                  className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-l"
+                >
+                  {cartQuantity <= 1 ? (
+                    <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-500" />
+                  ) : (
+                    <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-600" />
+                  )}
+                </button>
+
+                <div className="flex items-center justify-center min-w-[24px] sm:min-w-[28px] px-1 text-[10px] sm:text-xs font-bold text-red-700 bg-white border-x border-red-300">
+                  {updatingProducts.has(product._id) ? (
+                    <div className="w-2 h-2 border border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    cartQuantity
+                  )}
+                </div>
+
+                <button
+                  onClick={(e) => handleIncreaseQuantity(product, e)}
+                  disabled={updatingProducts.has(product._id)}
+                  className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-r"
+                >
+                  <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-600" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

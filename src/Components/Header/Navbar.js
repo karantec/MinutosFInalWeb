@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FaRegUser,
   FaShoppingCart,
@@ -12,6 +12,8 @@ import {
   FaMinus,
   FaTrash,
   FaMapMarkerAlt,
+  FaSignOutAlt,
+  FaUserCircle,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -22,6 +24,7 @@ import {
   updateCartItemAsync,
   removeFromCartAsync,
 } from "../store/cartSlice";
+import { logout } from "../store/authSlice"; // ← import logout action
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -30,6 +33,49 @@ const Header = () => {
   const cartItems = useSelector((state) => state.cart.cartItems);
   const cartLoading = useSelector((state) => state.cart.loading);
   const [selectedSlot, setSelectedSlot] = useState("Instant Delivery");
+
+  // ── Separate dropdown state + refs for desktop and mobile ──
+  const [isDesktopProfileOpen, setIsDesktopProfileOpen] = useState(false);
+  const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
+  const desktopProfileRef = useRef(null);
+  const mobileProfileRef = useRef(null);
+
+  // Close desktop dropdown on outside click
+  // Using "click" not "mousedown" so button's onClick fires before this listener closes it
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        desktopProfileRef.current &&
+        !desktopProfileRef.current.contains(e.target)
+      ) {
+        setIsDesktopProfileOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // Close mobile dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        mobileProfileRef.current &&
+        !mobileProfileRef.current.contains(e.target)
+      ) {
+        setIsMobileProfileOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setIsDesktopProfileOpen(false);
+    setIsMobileProfileOpen(false);
+    navigate("/");
+  };
+  // ────────────────────────────────────────────────────────────
 
   const cartTotal = cartItems.reduce(
     (total, item) => total + (item.price || 0) * (item.quantity || 0),
@@ -42,7 +88,6 @@ const Header = () => {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(() => {
-    // Try to get saved location first, fallback to default
     try {
       return (
         locationService.getSavedLocation() ||
@@ -55,26 +100,19 @@ const Header = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [updatingItems, setUpdatingItems] = useState(new Set());
 
-  // Manual location detection function
   const detectLocationManually = async () => {
     try {
       setLocationLoading(true);
-      console.log("Manual location detection started...");
-
       const result = await locationService.getUserLocationWithAddress();
-      console.log("Manual location service result:", result);
-
       if (result.success && result.location) {
         const locationString =
           result.location.address?.formatted ||
           result.location.address?.full ||
           "Current Location";
-        console.log("Manual location detected:", locationString);
         setSelectedLocation(locationString);
         locationService.saveLocationToStorage(locationString);
-        setIsLocationPopup(false); // Close popup on success
+        setIsLocationPopup(false);
       } else {
-        console.log("Manual location detection failed:", result);
         alert(
           "Unable to detect your location. Please enter manually or check permissions.",
         );
@@ -87,48 +125,31 @@ const Header = () => {
     }
   };
 
-  // Fetch cart on mount and when user changes
   useEffect(() => {
     if (user?.userId) {
       dispatch(fetchCartAsync(user.userId));
     }
   }, [dispatch, user]);
 
-  // Detect user location
   useEffect(() => {
     const detectLocation = async () => {
       try {
         setLocationLoading(true);
-        console.log("Starting location detection...");
-
         const result = await locationService.getUserLocationWithAddress();
-        console.log("Location service result:", result);
-
         if (result.success && result.location) {
           const locationString =
             result.location.address?.formatted ||
             result.location.address?.full ||
             "Current Location";
-          console.log("Setting location to:", locationString);
           setSelectedLocation(locationString);
           locationService.saveLocationToStorage(locationString);
         } else {
-          console.log("Location detection failed:", result);
-          // Try to get saved location from storage as fallback
           const savedLocation = locationService.getSavedLocation();
-          if (savedLocation) {
-            console.log("Using saved location:", savedLocation);
-            setSelectedLocation(savedLocation);
-          }
+          if (savedLocation) setSelectedLocation(savedLocation);
         }
       } catch (error) {
-        console.error("Location detection error:", error);
-        // Try to get saved location from storage as fallback
         const savedLocation = locationService.getSavedLocation();
-        if (savedLocation) {
-          console.log("Using saved location after error:", savedLocation);
-          setSelectedLocation(savedLocation);
-        }
+        if (savedLocation) setSelectedLocation(savedLocation);
       } finally {
         setLocationLoading(false);
       }
@@ -136,7 +157,6 @@ const Header = () => {
     detectLocation();
   }, []);
 
-  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       setCategoriesLoading(true);
@@ -154,30 +174,20 @@ const Header = () => {
     fetchCategories();
   }, []);
 
-  // ✅ Increase quantity function - with debouncing
   const handleIncreaseQuantity = async (item) => {
     if (!user?.userId) return;
-
     const itemId = item.productId || item._id;
-
-    // Prevent multiple clicks
     if (updatingItems.has(itemId)) return;
-
-    const newQuantity = item.quantity + 1;
     setUpdatingItems((prev) => new Set(prev).add(itemId));
-
     try {
-      const result = await dispatch(
+      await dispatch(
         updateCartItemAsync({
           userId: user.userId,
           productId: itemId,
-          quantity: newQuantity,
+          quantity: item.quantity + 1,
         }),
       ).unwrap();
-
-      console.log("Update success:", result);
     } catch (error) {
-      console.error("Error updating quantity:", error);
       alert("Failed to update quantity");
       dispatch(fetchCartAsync(user.userId));
     } finally {
@@ -189,35 +199,24 @@ const Header = () => {
     }
   };
 
-  // ✅ Decrease quantity function - with debouncing
   const handleDecreaseQuantity = async (item) => {
     if (!user?.userId) return;
-
     const itemId = item.productId || item._id;
-
-    // Prevent multiple clicks
     if (updatingItems.has(itemId)) return;
-
     if (item.quantity <= 1) {
       handleRemoveItem(item);
       return;
     }
-
-    const newQuantity = item.quantity - 1;
     setUpdatingItems((prev) => new Set(prev).add(itemId));
-
     try {
-      const result = await dispatch(
+      await dispatch(
         updateCartItemAsync({
           userId: user.userId,
           productId: itemId,
-          quantity: newQuantity,
+          quantity: item.quantity - 1,
         }),
       ).unwrap();
-
-      console.log("Update success:", result);
     } catch (error) {
-      console.error("Error updating quantity:", error);
       alert("Failed to update quantity");
       dispatch(fetchCartAsync(user.userId));
     } finally {
@@ -229,24 +228,16 @@ const Header = () => {
     }
   };
 
-  // ✅ Remove item function
   const handleRemoveItem = async (item) => {
     if (!user?.userId) return;
-
     const itemId = item.productId || item._id;
     setUpdatingItems((prev) => new Set(prev).add(itemId));
-
     try {
       await dispatch(
-        removeFromCartAsync({
-          userId: user.userId,
-          productId: itemId,
-        }),
+        removeFromCartAsync({ userId: user.userId, productId: itemId }),
       ).unwrap();
-
       dispatch(fetchCartAsync(user.userId));
     } catch (error) {
-      console.error("Error removing item:", error);
       alert("Failed to remove item");
     } finally {
       setUpdatingItems((prev) => {
@@ -256,6 +247,9 @@ const Header = () => {
       });
     }
   };
+
+  // Dropdowns are inlined directly in JSX below (no inner components)
+  // so that refs stay stable across re-renders.
 
   return (
     <div className="bg-white sticky top-0 z-50 shadow-sm">
@@ -290,7 +284,6 @@ const Header = () => {
                 {cartItems.map((item) => {
                   const itemId = item.productId || item._id;
                   const isUpdating = updatingItems.has(itemId);
-
                   return (
                     <div
                       key={item._id}
@@ -304,7 +297,6 @@ const Header = () => {
                             className="w-full h-full object-contain rounded-md"
                           />
                         </div>
-
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-sm text-gray-900 leading-tight">
                             {item.name}
@@ -318,8 +310,6 @@ const Header = () => {
                             <p className="text-sm font-semibold text-gray-900">
                               ₹{item.price}
                             </p>
-
-                            {/* Quantity Controls */}
                             <div className="flex items-center">
                               <button
                                 onClick={() => handleDecreaseQuantity(item)}
@@ -332,7 +322,6 @@ const Header = () => {
                                   <FaMinus className="w-2.5 h-2.5 text-gray-600" />
                                 )}
                               </button>
-
                               <div className="w-10 h-7 flex items-center justify-center bg-white border-t border-b border-gray-300 text-sm font-medium">
                                 {isUpdating ? (
                                   <FaSpinner className="w-3 h-3 animate-spin text-gray-400" />
@@ -340,7 +329,6 @@ const Header = () => {
                                   item.quantity
                                 )}
                               </div>
-
                               <button
                                 onClick={() => handleIncreaseQuantity(item)}
                                 disabled={isUpdating || cartLoading}
@@ -350,7 +338,6 @@ const Header = () => {
                               </button>
                             </div>
                           </div>
-
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-xs font-semibold text-gray-700">
                               Total: ₹{(item.price || 0) * (item.quantity || 0)}
@@ -437,10 +424,7 @@ const Header = () => {
               Detect your location or enter manually:
             </p>
             <button
-              onClick={() => {
-                console.log("Detect location button clicked");
-                detectLocationManually();
-              }}
+              onClick={detectLocationManually}
               className="w-full bg-red-600 text-white py-2 rounded-md mb-3 hover:bg-red-700 transition-colors disabled:opacity-50"
               disabled={locationLoading}
             >
@@ -552,12 +536,41 @@ const Header = () => {
 
               <div className="flex items-center gap-4">
                 {user ? (
-                  <Link
-                    to="/profile"
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    <FaRegUser className="w-5 h-5 text-gray-700" />
-                  </Link>
+                  <div className="relative" ref={desktopProfileRef}>
+                    <button
+                      onClick={() => setIsDesktopProfileOpen((prev) => !prev)}
+                      className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                      <FaRegUser className="w-5 h-5 text-gray-700" />
+                    </button>
+                    {isDesktopProfileOpen && (
+                      <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                          <div className="flex items-center gap-2">
+                            <FaUserCircle className="w-5 h-5 text-gray-400" />
+                            <span className="text-xs text-gray-600 truncate">
+                              {user?.name || user?.email || "My Account"}
+                            </span>
+                          </div>
+                        </div>
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsDesktopProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <FaRegUser className="w-4 h-4 text-gray-500" />
+                          My Profile
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                        >
+                          <FaSignOutAlt className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <Link
                     to="/login"
@@ -587,7 +600,6 @@ const Header = () => {
                   Failed to load categories.
                 </div>
               )}
-
               {categoriesLoading ? (
                 <div className="p-4 text-gray-500">Loading categories...</div>
               ) : (
@@ -596,12 +608,11 @@ const Header = () => {
                     <div
                       key={category.id}
                       className="cursor-pointer hover:text-red-600 transition-colors whitespace-nowrap text-sm font-medium text-gray-700"
-                      onClick={() => {
-                        // Navigate to subcategory page with URL-encoded category name
+                      onClick={() =>
                         navigate(
                           `/subCategory/${encodeURIComponent(category.name)}`,
-                        );
-                      }}
+                        )
+                      }
                     >
                       {category.name}
                     </div>
@@ -615,7 +626,6 @@ const Header = () => {
         {/* Mobile Header */}
         <div className="md:hidden">
           <div className="flex items-center justify-between p-4">
-            {/* Left: Logo */}
             <Link to="/" className="flex items-center">
               <img
                 src="https://www.minutos.in/minitos.png"
@@ -624,15 +634,44 @@ const Header = () => {
               />
             </Link>
 
-            {/* Right: User & Cart */}
             <div className="flex items-center gap-2">
+              {/* ── UPDATED: mobile dropdown ── */}
               {user ? (
-                <Link
-                  to="/profile"
-                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  <FaRegUser className="w-4 h-4 text-gray-700" />
-                </Link>
+                <div className="relative" ref={mobileProfileRef}>
+                  <button
+                    onClick={() => setIsMobileProfileOpen((prev) => !prev)}
+                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <FaRegUser className="w-4 h-4 text-gray-700" />
+                  </button>
+                  {isMobileProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+                      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                        <div className="flex items-center gap-2">
+                          <FaUserCircle className="w-5 h-5 text-gray-400" />
+                          <span className="text-xs text-gray-600 truncate">
+                            {user?.name || user?.email || "My Account"}
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsMobileProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <FaRegUser className="w-4 h-4 text-gray-500" />
+                        My Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                      >
+                        <FaSignOutAlt className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link
                   to="/login"

@@ -12,7 +12,7 @@ export const fetchCartAsync = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // ✅ Async thunk: add item to cart
@@ -26,7 +26,7 @@ export const addToCartAsync = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // ✅ NEW: Async thunk: update cart item quantity
@@ -41,14 +41,14 @@ export const updateCartItemAsync = createAsyncThunk(
         userId,
         productId,
         quantity,
-        cartItemId
+        cartItemId,
       );
 
       return response;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // ✅ Async thunk: remove item
@@ -62,7 +62,7 @@ export const removeFromCartAsync = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // ✅ Initial state
@@ -89,7 +89,7 @@ const findCartItemIndex = (cartItems, targetItem) => {
       item._id === targetItem._id ||
       item._id === targetItem.productId ||
       item.productId === targetItem._id ||
-      item.productId === targetItem.productId
+      item.productId === targetItem.productId,
   );
 };
 
@@ -106,7 +106,7 @@ const cartSlice = createSlice({
     updateCartItemLocally: (state, action) => {
       const { productId, quantity } = action.payload;
       const index = state.cartItems.findIndex(
-        (item) => item._id === productId || item.productId === productId
+        (item) => item._id === productId || item.productId === productId,
       );
       if (index >= 0) {
         state.cartItems[index].quantity = quantity;
@@ -219,7 +219,7 @@ const cartSlice = createSlice({
           state.cartItems = cart.items;
         } else {
           state.cartItems = state.cartItems.filter(
-            (item) => item._id !== productId && item.productId !== productId
+            (item) => item._id !== productId && item.productId !== productId,
           );
         }
 
