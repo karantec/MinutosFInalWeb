@@ -57,7 +57,7 @@ const ChocolatePage = () => {
       (item) =>
         item.productId === productId ||
         item._id === productId ||
-        item.product?._id === productId
+        item.product?._id === productId,
     );
   };
 
@@ -83,7 +83,7 @@ const ChocolatePage = () => {
             productId: product._id,
             cartItemId: existingCartItem._id,
             quantity: existingCartItem.quantity + 1,
-          })
+          }),
         ).unwrap();
       } else {
         // If item doesn't exist, add new item
@@ -92,7 +92,7 @@ const ChocolatePage = () => {
             userId: user.userId,
             productId: product._id,
             quantity: 1,
-          })
+          }),
         ).unwrap();
       }
 
@@ -128,7 +128,7 @@ const ChocolatePage = () => {
           productId: product._id,
           cartItemId: cartItem._id,
           quantity: cartItem.quantity + 1,
-        })
+        }),
       ).unwrap();
 
       // Refresh cart data
@@ -167,7 +167,7 @@ const ChocolatePage = () => {
           removeFromCartAsync({
             userId: user.userId,
             cartItemId: cartItem._id,
-          })
+          }),
         ).unwrap();
       } else {
         // Decrease quantity
@@ -177,7 +177,7 @@ const ChocolatePage = () => {
             productId: product._id,
             cartItemId: cartItem._id,
             quantity: cartItem.quantity - 1,
-          })
+          }),
         ).unwrap();
       }
 
@@ -253,7 +253,7 @@ const ChocolatePage = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          "https://api.minutos.in/api/product/subcategories?subCategories=68c31d5843f5a67c5b62b075"
+          "https://api.minutos.in/api/product/subcategories?subCategories=6958f2fea44f26ca052e35ac",
         );
         setProducts(res.data.data || []);
       } catch (err) {
@@ -280,10 +280,10 @@ const ChocolatePage = () => {
       <section className="px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
-            Hot Deals
+            Fresh Fruits & Vegetables
           </h2>
           <Link
-            to="/subCategory/Indian Mithai"
+            to="subCategory/Dairy%20%26%20beverages"
             className="text-red-600 text-sm font-semibold hover:text-red-700 transition-colors"
           >
             see all
@@ -329,7 +329,7 @@ const ChocolatePage = () => {
                     ? Math.round(
                         ((product.originalPrice - product.price) /
                           product.originalPrice) *
-                          100
+                          100,
                       )
                     : 0;
 

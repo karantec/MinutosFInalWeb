@@ -49,7 +49,7 @@ const authSlice = createSlice({
       // Persist to localStorage
       localStorage.setItem(
         "auth",
-        JSON.stringify({ token: state.token, user: state.user })
+        JSON.stringify({ token: state.token, user: state.user }),
       );
 
       // Auto-logout setup

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { cartService } from "../service/cartService";
+import { logout } from "./authSlice"; // ✅ import your logout action — adjust path if needed
 
 // ✅ Async thunk: fetch cart
 export const fetchCartAsync = createAsyncThunk(
@@ -8,7 +9,7 @@ export const fetchCartAsync = createAsyncThunk(
     try {
       if (!userId) throw new Error("User not logged in");
       const response = await cartService.getCart(userId);
-      return response; // already { items: [...] }
+      return response;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
@@ -22,28 +23,25 @@ export const addToCartAsync = createAsyncThunk(
     try {
       if (!userId) throw new Error("User not logged in");
       const response = await cartService.addToCart(userId, productId, quantity);
-      return response; // already cart object or single item
+      return response;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
   },
 );
 
-// ✅ NEW: Async thunk: update cart item quantity
+// ✅ Async thunk: update cart item quantity
 export const updateCartItemAsync = createAsyncThunk(
   "cart/updateCartItem",
   async ({ userId, productId, quantity, cartItemId }, { rejectWithValue }) => {
     try {
       if (!userId) throw new Error("User not logged in");
-
-      // Always use the update endpoint, not add
       const response = await cartService.updateCartItem(
         userId,
         productId,
         quantity,
         cartItemId,
       );
-
       return response;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -58,7 +56,7 @@ export const removeFromCartAsync = createAsyncThunk(
     try {
       if (!userId) throw new Error("User not logged in");
       const response = await cartService.removeFromCart(userId, productId);
-      return { productId, cart: response }; // response is { items: [...] }
+      return { productId, cart: response };
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
@@ -71,7 +69,7 @@ const initialState = {
   cartTotal: 0,
   status: "idle",
   error: null,
-  loading: false, // Add loading state for better UX
+  loading: false,
 };
 
 // ✅ Utility: recalc totals
@@ -101,8 +99,9 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.cartItems = [];
       state.cartTotal = 0;
+      state.status = "idle";
+      state.error = null;
     },
-    // ✅ Add local cart update for immediate UI feedback
     updateCartItemLocally: (state, action) => {
       const { productId, quantity } = action.payload;
       const index = state.cartItems.findIndex(
@@ -116,6 +115,16 @@ const cartSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+
+      // ✅ KEY FIX: automatically clear cart when user logs out
+      .addCase(logout, (state) => {
+        state.cartItems = [];
+        state.cartTotal = 0;
+        state.status = "idle";
+        state.error = null;
+        state.loading = false;
+      })
+
       // fetch cart
       .addCase(fetchCartAsync.pending, (state) => {
         state.status = "loading";
@@ -143,19 +152,13 @@ const cartSlice = createSlice({
         state.status = "succeeded";
         state.loading = false;
 
-        // Handle both single item and items array responses
         const responseData = action.payload;
-        let items = [];
 
         if (responseData.items) {
-          // If response has items array, use it
-          items = responseData.items;
-          state.cartItems = items;
+          state.cartItems = responseData.items;
         } else if (responseData._id) {
-          // If response is a single item, update/add it
           const newItem = responseData;
           const index = findCartItemIndex(state.cartItems, newItem);
-
           if (index >= 0) {
             state.cartItems[index] = newItem;
           } else {
@@ -172,7 +175,7 @@ const cartSlice = createSlice({
         state.error = action.payload || "Failed to add to cart";
       })
 
-      // ✅ NEW: update cart item
+      // update cart item
       .addCase(updateCartItemAsync.pending, (state) => {
         state.loading = true;
       })
@@ -180,17 +183,13 @@ const cartSlice = createSlice({
         state.status = "succeeded";
         state.loading = false;
 
-        // Handle response - update the full cart items
         const responseData = action.payload;
 
         if (responseData.items) {
-          // If response contains full cart items, replace all items
           state.cartItems = responseData.items;
         } else if (responseData._id) {
-          // If response is single updated item, find and update it
           const updatedItem = responseData;
           const index = findCartItemIndex(state.cartItems, updatedItem);
-
           if (index >= 0) {
             state.cartItems[index] = updatedItem;
           }

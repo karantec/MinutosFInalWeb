@@ -56,7 +56,7 @@ const Mithai = () => {
       (item) =>
         item.productId === productId ||
         item._id === productId ||
-        item.product?._id === productId
+        item.product?._id === productId,
     );
   };
 
@@ -82,7 +82,7 @@ const Mithai = () => {
             productId: product._id,
             cartItemId: existingCartItem._id,
             quantity: existingCartItem.quantity + 1,
-          })
+          }),
         ).unwrap();
       } else {
         // If item doesn't exist, add new item
@@ -91,7 +91,7 @@ const Mithai = () => {
             userId: user.userId,
             productId: product._id,
             quantity: 1,
-          })
+          }),
         ).unwrap();
       }
 
@@ -127,7 +127,7 @@ const Mithai = () => {
           productId: product._id,
           cartItemId: cartItem._id,
           quantity: cartItem.quantity + 1,
-        })
+        }),
       ).unwrap();
 
       // Refresh cart data
@@ -166,7 +166,7 @@ const Mithai = () => {
           removeFromCartAsync({
             userId: user.userId,
             cartItemId: cartItem._id,
-          })
+          }),
         ).unwrap();
       } else {
         // Decrease quantity
@@ -176,7 +176,7 @@ const Mithai = () => {
             productId: product._id,
             cartItemId: cartItem._id,
             quantity: cartItem.quantity - 1,
-          })
+          }),
         ).unwrap();
       }
 
@@ -252,7 +252,7 @@ const Mithai = () => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
-          "https://api.minutos.in/api/product/subcategories?subCategories=68c31d7043f5a67c5b62b07d"
+          "https://api.minutos.in/api/product/subcategories?subCategories=6958091ea44f26ca052e33ad",
         );
         setProducts(res.data.data || []);
       } catch (err) {
@@ -279,7 +279,7 @@ const Mithai = () => {
       <section className="px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-bold text-xl sm:text-2xl text-gray-900">
-            Indian Mithai
+            Beverages
           </h2>
           <Link
             to="/subCategory/Indian Mithai"
@@ -328,7 +328,7 @@ const Mithai = () => {
                     ? Math.round(
                         ((product.originalPrice - product.price) /
                           product.originalPrice) *
-                          100
+                          100,
                       )
                     : 0;
 

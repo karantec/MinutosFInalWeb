@@ -100,12 +100,6 @@ const CategoriesList = () => {
       </div>
 
       {/* Additional Components Section */}
-      <div className="mt-10 space-y-8">
-        <ProductCard />
-        <ProductCard3 />
-        <ChocolatePage />
-        <ProductCard4 />
-      </div>
     </section>
   );
 };

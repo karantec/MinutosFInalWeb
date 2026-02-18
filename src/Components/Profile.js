@@ -273,68 +273,323 @@ function ProfileSection({ user }) {
 }
 
 // ── Addresses Section ─────────────────────────────────────────────
+
+/* ───────────────────────────────────────────── */
+/* ADDRESS SECTION */
+/* ───────────────────────────────────────────── */
+
 function AddressesSection() {
-  const dummyAddresses = [
-    { type: "Home", details: "123, MG Road, Ranchi - 834001" },
-    { type: "Office", details: "LetsCode Pvt Ltd, Hinoo, Ranchi" },
-  ];
+  const [addresses, setAddresses] = useState([
+    {
+      id: 1,
+      type: "Home",
+      name: "Karan Rana",
+      phone: "9876543210",
+      addressLine: "123, MG Road",
+      city: "Ranchi",
+      state: "Jharkhand",
+      pincode: "834001",
+      isDefault: true,
+    },
+  ]);
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const [formData, setFormData] = useState({
+    type: "",
+    name: "",
+    phone: "",
+    addressLine: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+
+  const handleSubmit = () => {
+    if (!formData.name || !formData.phone) return alert("Fill all fields");
+
+    if (editingId) {
+      setAddresses((prev) =>
+        prev.map((addr) =>
+          addr.id === editingId ? { ...addr, ...formData } : addr,
+        ),
+      );
+    } else {
+      setAddresses([
+        ...addresses,
+        {
+          id: Date.now(),
+          ...formData,
+          isDefault: addresses.length === 0,
+        },
+      ]);
+    }
+
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({
+      type: "",
+      name: "",
+      phone: "",
+      addressLine: "",
+      city: "",
+      state: "",
+      pincode: "",
+    });
+  };
+
+  const setDefaultAddress = (id) => {
+    setAddresses((prev) =>
+      prev.map((addr) => ({
+        ...addr,
+        isDefault: addr.id === id,
+      })),
+    );
+  };
+
+  const deleteAddress = (id) => {
+    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+  };
+
+  const handleEdit = (addr) => {
+    setEditingId(addr.id);
+    setFormData(addr);
+    setShowForm(true);
+  };
+
   return (
-    <div>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border mb-10">
       <h3 className="text-lg font-semibold mb-4">Saved Addresses</h3>
-      <div className="space-y-3">
-        {dummyAddresses.map((addr, i) => (
-          <div
-            key={i}
-            className="border rounded-xl p-4 flex justify-between items-center"
-          >
-            <div>
-              <p className="font-semibold text-gray-800">{addr.type}</p>
-              <p className="text-sm text-gray-500 mt-0.5">{addr.details}</p>
+
+      <div className="space-y-4">
+        {addresses.map((addr) => (
+          <div key={addr.id} className="border rounded-xl p-4">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-semibold">
+                  {addr.type}
+                  {addr.isDefault && (
+                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                      Default
+                    </span>
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {addr.name} • {addr.phone}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {addr.addressLine}, {addr.city}, {addr.state} - {addr.pincode}
+                </p>
+              </div>
+
+              <div className="flex gap-3 text-sm">
+                {!addr.isDefault && (
+                  <button
+                    onClick={() => setDefaultAddress(addr.id)}
+                    className="text-blue-600"
+                  >
+                    Set Default
+                  </button>
+                )}
+                <button
+                  onClick={() => handleEdit(addr)}
+                  className="text-gray-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => deleteAddress(addr.id)}
+                  className="text-red-500"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <button className="text-red-500 text-sm font-medium hover:text-red-700">
-              Edit
-            </button>
           </div>
         ))}
       </div>
-      <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm">
+
+      <button
+        onClick={() => setShowForm(true)}
+        className="mt-6 w-full bg-red-500 text-white py-3 rounded-lg"
+      >
         + Add New Address
       </button>
+
+      {/* Modal Form */}
+      {showForm && (
+        <div className="mt-6 border p-4 rounded-xl bg-gray-50 space-y-3">
+          <input
+            placeholder="Type (Home/Office)"
+            className="w-full border p-2 rounded"
+            value={formData.type}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+          />
+          <input
+            placeholder="Full Name"
+            className="w-full border p-2 rounded"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+          <input
+            placeholder="Phone"
+            className="w-full border p-2 rounded"
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+          />
+          <input
+            placeholder="Address Line"
+            className="w-full border p-2 rounded"
+            value={formData.addressLine}
+            onChange={(e) =>
+              setFormData({ ...formData, addressLine: e.target.value })
+            }
+          />
+          <input
+            placeholder="City"
+            className="w-full border p-2 rounded"
+            value={formData.city}
+            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+          />
+          <input
+            placeholder="State"
+            className="w-full border p-2 rounded"
+            value={formData.state}
+            onChange={(e) =>
+              setFormData({ ...formData, state: e.target.value })
+            }
+          />
+          <input
+            placeholder="Pincode"
+            className="w-full border p-2 rounded"
+            value={formData.pincode}
+            onChange={(e) =>
+              setFormData({ ...formData, pincode: e.target.value })
+            }
+          />
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleSubmit}
+              className="bg-green-500 text-white px-4 py-2 rounded"
+            >
+              {editingId ? "Update Address" : "Save Address"}
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="bg-gray-400 text-white px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Support Section ───────────────────────────────────────────────
+/* ───────────────────────────────────────────── */
+/* SUPPORT SECTION */
+/* ───────────────────────────────────────────── */
+
 function SupportSection() {
-  const tickets = [
-    { id: 1, query: "Order not delivered", status: "Resolved" },
-    { id: 2, query: "Wallet refund not received", status: "Pending" },
-  ];
+  const [tickets, setTickets] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+
+  const [formData, setFormData] = useState({
+    orderId: "",
+    category: "",
+    query: "",
+  });
+
+  const handleSubmit = () => {
+    if (!formData.orderId || !formData.query) return alert("Fill all fields");
+
+    setTickets([
+      ...tickets,
+      {
+        id: Date.now(),
+        ...formData,
+        status: "Open",
+        priority: "Medium",
+      },
+    ]);
+
+    setShowForm(false);
+    setFormData({ orderId: "", category: "", query: "" });
+  };
+
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4">Support Tickets</h3>
-      <div className="space-y-3">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border">
+      <h3 className="text-lg font-semibold mb-4">Customer Support</h3>
+
+      <div className="space-y-4">
         {tickets.map((t) => (
-          <div
-            key={t.id}
-            className="border rounded-xl p-4 flex justify-between items-center"
-          >
-            <p className="text-sm text-gray-800">{t.query}</p>
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                t.status === "Resolved"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-yellow-100 text-yellow-700"
-              }`}
-            >
+          <div key={t.id} className="border rounded-xl p-4">
+            <p className="font-semibold">
+              {t.category} • {t.orderId}
+            </p>
+            <p className="text-sm text-gray-600">{t.query}</p>
+            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">
               {t.status}
             </span>
           </div>
         ))}
       </div>
-      <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm">
-        Raise New Ticket
+
+      <button
+        onClick={() => setShowForm(true)}
+        className="mt-6 w-full bg-red-500 text-white py-3 rounded-lg"
+      >
+        + Raise New Ticket
       </button>
+
+      {showForm && (
+        <div className="mt-6 border p-4 rounded-xl bg-gray-50 space-y-3">
+          <input
+            placeholder="Order ID"
+            className="w-full border p-2 rounded"
+            value={formData.orderId}
+            onChange={(e) =>
+              setFormData({ ...formData, orderId: e.target.value })
+            }
+          />
+          <input
+            placeholder="Category"
+            className="w-full border p-2 rounded"
+            value={formData.category}
+            onChange={(e) =>
+              setFormData({ ...formData, category: e.target.value })
+            }
+          />
+          <textarea
+            placeholder="Describe your issue..."
+            className="w-full border p-2 rounded"
+            value={formData.query}
+            onChange={(e) =>
+              setFormData({ ...formData, query: e.target.value })
+            }
+          />
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleSubmit}
+              className="bg-green-500 text-white px-4 py-2 rounded"
+            >
+              Submit Ticket
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="bg-gray-400 text-white px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
