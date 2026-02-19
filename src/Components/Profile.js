@@ -16,6 +16,13 @@ import {
   ChevronDown,
   ChevronUp,
   Store,
+  Plus,
+  Trash2,
+  Pencil,
+  Star,
+  Home,
+  Briefcase,
+  MoreHorizontal,
 } from "lucide-react";
 import { useAppDispatch } from "./hooks/useAppDispatch";
 
@@ -127,7 +134,6 @@ function OrdersSection({ token }) {
               key={order._id}
               className="border border-gray-200 rounded-xl overflow-hidden"
             >
-              {/* Order Header */}
               <button
                 onClick={() => setExpandedId(isExpanded ? null : order._id)}
                 className="w-full text-left px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
@@ -167,7 +173,6 @@ function OrdersSection({ token }) {
                 )}
               </button>
 
-              {/* Expanded: Order Items */}
               {isExpanded && (
                 <div className="border-t border-gray-100 bg-gray-50 px-4 py-4">
                   <p className="text-xs font-semibold text-gray-500 uppercase mb-3">
@@ -202,7 +207,6 @@ function OrdersSection({ token }) {
                     ))}
                   </div>
 
-                  {/* Shipping Address */}
                   {order.shippingAddress && (
                     <div className="mt-3 bg-white rounded-lg px-3 py-2 border border-gray-100">
                       <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
@@ -226,7 +230,6 @@ function OrdersSection({ token }) {
                     </div>
                   )}
 
-                  {/* Total */}
                   <div className="mt-3 flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="text-sm text-gray-500">Total Amount</span>
                     <span className="text-base font-bold text-red-600">
@@ -272,215 +275,438 @@ function ProfileSection({ user }) {
   );
 }
 
-// ── Addresses Section ─────────────────────────────────────────────
+// ── Label icon helper ─────────────────────────────────────────────
+const LabelIcon = ({ label }) => {
+  if (label === "Home") return <Home className="w-4 h-4" />;
+  if (label === "Work") return <Briefcase className="w-4 h-4" />;
+  return <MoreHorizontal className="w-4 h-4" />;
+};
 
-/* ───────────────────────────────────────────── */
-/* ADDRESS SECTION */
-/* ───────────────────────────────────────────── */
+const LABEL_COLORS = {
+  Home: "bg-blue-100 text-blue-700",
+  Work: "bg-purple-100 text-purple-700",
+  Other: "bg-gray-100 text-gray-600",
+};
 
-function AddressesSection() {
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      type: "Home",
-      name: "Karan Rana",
-      phone: "9876543210",
-      addressLine: "123, MG Road",
-      city: "Ranchi",
-      state: "Jharkhand",
-      pincode: "834001",
-      isDefault: true,
-    },
-  ]);
+// ── Empty form template ───────────────────────────────────────────
+const EMPTY_FORM = {
+  label: "Home",
+  street: "",
+  city: "",
+  state: "",
+  pincode: "",
+  phone: "",
+};
 
+// ── Addresses Section (API-connected) ────────────────────────────
+function AddressesSection({ token }) {
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null); // address _id being edited
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [settingDefaultId, setSettingDefaultId] = useState(null);
+  const [formError, setFormError] = useState("");
 
-  const [formData, setFormData] = useState({
-    type: "",
-    name: "",
-    phone: "",
-    addressLine: "",
-    city: "",
-    state: "",
-    pincode: "",
-  });
+  // ── Fetch ─────────────────────────────────────────────────────
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
 
-  const handleSubmit = () => {
-    if (!formData.name || !formData.phone) return alert("Fill all fields");
-
-    if (editingId) {
-      setAddresses((prev) =>
-        prev.map((addr) =>
-          addr.id === editingId ? { ...addr, ...formData } : addr,
-        ),
-      );
-    } else {
-      setAddresses([
-        ...addresses,
-        {
-          id: Date.now(),
-          ...formData,
-          isDefault: addresses.length === 0,
-        },
-      ]);
+  const fetchAddresses = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await axios.get(`${API_BASE}/user/addresses`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAddresses(res.data?.addresses || []);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load addresses. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setShowForm(false);
+  // ── Open form for new address ─────────────────────────────────
+  const openAddForm = () => {
     setEditingId(null);
-    setFormData({
-      type: "",
-      name: "",
-      phone: "",
-      addressLine: "",
-      city: "",
-      state: "",
-      pincode: "",
-    });
-  };
-
-  const setDefaultAddress = (id) => {
-    setAddresses((prev) =>
-      prev.map((addr) => ({
-        ...addr,
-        isDefault: addr.id === id,
-      })),
-    );
-  };
-
-  const deleteAddress = (id) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
-  };
-
-  const handleEdit = (addr) => {
-    setEditingId(addr.id);
-    setFormData(addr);
+    setFormData(EMPTY_FORM);
+    setFormError("");
     setShowForm(true);
   };
 
+  // ── Open form for editing ─────────────────────────────────────
+  const openEditForm = (addr) => {
+    setEditingId(addr._id);
+    setFormData({
+      label: addr.label || "Home",
+      street: addr.street || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      pincode: addr.pincode || "",
+      phone: addr.phone || "",
+    });
+    setFormError("");
+    setShowForm(true);
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setFormError("");
+  };
+
+  // ── Save (create or update) ───────────────────────────────────
+  const handleSubmit = async () => {
+    setFormError("");
+    if (
+      !formData.street ||
+      !formData.city ||
+      !formData.pincode ||
+      !formData.phone
+    ) {
+      setFormError("Please fill in all required fields.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (editingId) {
+        // PUT /api/user/addresses/:id
+        const res = await axios.put(
+          `${API_BASE}/user/addresses/${editingId}`,
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (res.data?.success) {
+          setAddresses((prev) =>
+            prev.map((a) => (a._id === editingId ? res.data.address : a)),
+          );
+        }
+      } else {
+        // POST /api/user/addresses
+        const res = await axios.post(`${API_BASE}/user/addresses`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data?.success) {
+          setAddresses((prev) => [...prev, res.data.address]);
+        }
+      }
+      cancelForm();
+    } catch (err) {
+      setFormError(
+        err.response?.data?.message ||
+          "Failed to save address. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ── Delete ────────────────────────────────────────────────────
+  const handleDelete = async (addressId) => {
+    setDeletingId(addressId);
+    try {
+      await axios.delete(`${API_BASE}/user/addresses/${addressId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAddresses((prev) => prev.filter((a) => a._id !== addressId));
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // ── Set default ───────────────────────────────────────────────
+  const handleSetDefault = async (addressId) => {
+    setSettingDefaultId(addressId);
+    try {
+      const res = await axios.patch(
+        `${API_BASE}/user/addresses/${addressId}/default`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.data?.addresses) {
+        setAddresses(res.data.addresses);
+      } else {
+        // Optimistic fallback
+        setAddresses((prev) =>
+          prev.map((a) => ({ ...a, isDefault: a._id === addressId })),
+        );
+      }
+    } catch (err) {
+      console.error("Set default failed:", err);
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
+
+  // ── Render ────────────────────────────────────────────────────
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border mb-10">
-      <h3 className="text-lg font-semibold mb-4">Saved Addresses</h3>
-
-      <div className="space-y-4">
-        {addresses.map((addr) => (
-          <div key={addr.id} className="border rounded-xl p-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="font-semibold">
-                  {addr.type}
-                  {addr.isDefault && (
-                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                      Default
-                    </span>
-                  )}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {addr.name} • {addr.phone}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {addr.addressLine}, {addr.city}, {addr.state} - {addr.pincode}
-                </p>
-              </div>
-
-              <div className="flex gap-3 text-sm">
-                {!addr.isDefault && (
-                  <button
-                    onClick={() => setDefaultAddress(addr.id)}
-                    className="text-blue-600"
-                  >
-                    Set Default
-                  </button>
-                )}
-                <button
-                  onClick={() => handleEdit(addr)}
-                  className="text-gray-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteAddress(addr.id)}
-                  className="text-red-500"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-lg font-semibold">
+          Saved Addresses{" "}
+          {!loading && (
+            <span className="text-sm font-normal text-gray-400">
+              ({addresses.length}/5)
+            </span>
+          )}
+        </h3>
+        {!showForm && addresses.length < 5 && (
+          <button
+            onClick={openAddForm}
+            className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Address
+          </button>
+        )}
       </div>
 
-      <button
-        onClick={() => setShowForm(true)}
-        className="mt-6 w-full bg-red-500 text-white py-3 rounded-lg"
-      >
-        + Add New Address
-      </button>
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm mb-4 flex items-center justify-between">
+          {error}
+          <button onClick={fetchAddresses} className="underline text-xs ml-2">
+            Retry
+          </button>
+        </div>
+      )}
 
-      {/* Modal Form */}
+      {/* Loading */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12 text-gray-400">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading addresses...
+        </div>
+      ) : addresses.length === 0 && !showForm ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
+          <MapPin className="w-10 h-10 text-gray-300 mb-3" />
+          <p className="text-gray-500 font-medium">No saved addresses yet</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Add an address for faster checkout
+          </p>
+          <button
+            onClick={openAddForm}
+            className="mt-4 flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+          >
+            <Plus className="w-4 h-4" /> Add First Address
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {addresses.map((addr) => (
+            <div
+              key={addr._id}
+              className={`border-2 rounded-xl p-4 transition-colors ${addr.isDefault ? "border-red-300 bg-red-50" : "border-gray-200 bg-white"}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                {/* Left: info */}
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div
+                    className={`p-2 rounded-lg flex-shrink-0 ${LABEL_COLORS[addr.label] || "bg-gray-100 text-gray-600"}`}
+                  >
+                    <LabelIcon label={addr.label} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span
+                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${LABEL_COLORS[addr.label] || "bg-gray-100 text-gray-600"}`}
+                      >
+                        {addr.label || "Address"}
+                      </span>
+                      {addr.isDefault && (
+                        <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                          <Star className="w-3 h-3 fill-green-600 stroke-green-600" />{" "}
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {addr.street}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {[addr.city, addr.state, addr.pincode]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      📞 {addr.phone}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: actions */}
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditForm(addr)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(addr._id)}
+                      disabled={deletingId === addr._id}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete"
+                    >
+                      {deletingId === addr._id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {!addr.isDefault && (
+                    <button
+                      onClick={() => handleSetDefault(addr._id)}
+                      disabled={settingDefaultId === addr._id}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors flex items-center gap-1"
+                    >
+                      {settingDefaultId === addr._id ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Star className="w-3 h-3" />
+                      )}
+                      Set Default
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Add / Edit Form ─────────────────────────────────────── */}
       {showForm && (
-        <div className="mt-6 border p-4 rounded-xl bg-gray-50 space-y-3">
-          <input
-            placeholder="Type (Home/Office)"
-            className="w-full border p-2 rounded"
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-          />
-          <input
-            placeholder="Full Name"
-            className="w-full border p-2 rounded"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-          <input
-            placeholder="Phone"
-            className="w-full border p-2 rounded"
-            value={formData.phone}
-            onChange={(e) =>
-              setFormData({ ...formData, phone: e.target.value })
-            }
-          />
-          <input
-            placeholder="Address Line"
-            className="w-full border p-2 rounded"
-            value={formData.addressLine}
-            onChange={(e) =>
-              setFormData({ ...formData, addressLine: e.target.value })
-            }
-          />
-          <input
-            placeholder="City"
-            className="w-full border p-2 rounded"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-          />
-          <input
-            placeholder="State"
-            className="w-full border p-2 rounded"
-            value={formData.state}
-            onChange={(e) =>
-              setFormData({ ...formData, state: e.target.value })
-            }
-          />
-          <input
-            placeholder="Pincode"
-            className="w-full border p-2 rounded"
-            value={formData.pincode}
-            onChange={(e) =>
-              setFormData({ ...formData, pincode: e.target.value })
-            }
-          />
+        <div className="mt-4 border-2 border-red-200 rounded-xl p-5 bg-red-50">
+          <h4 className="font-semibold text-gray-800 mb-4">
+            {editingId ? "Edit Address" : "Add New Address"}
+          </h4>
 
-          <div className="flex gap-3">
+          {/* Label selector */}
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-gray-600 mb-2">
+              Label
+            </label>
+            <div className="flex gap-2">
+              {["Home", "Work", "Other"].map((lbl) => (
+                <button
+                  key={lbl}
+                  onClick={() => setFormData({ ...formData, label: lbl })}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                    formData.label === lbl
+                      ? "bg-red-600 text-white border-red-600"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-red-400"
+                  }`}
+                >
+                  <LabelIcon label={lbl} /> {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Street / House / Flat *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 12A, Park Street"
+                value={formData.street}
+                onChange={(e) =>
+                  setFormData({ ...formData, street: e.target.value })
+                }
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                City *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Patna"
+                value={formData.city}
+                onChange={(e) =>
+                  setFormData({ ...formData, city: e.target.value })
+                }
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                State
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Bihar"
+                value={formData.state}
+                onChange={(e) =>
+                  setFormData({ ...formData, state: e.target.value })
+                }
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Pincode *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 800001"
+                value={formData.pincode}
+                onChange={(e) =>
+                  setFormData({ ...formData, pincode: e.target.value })
+                }
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Phone *
+              </label>
+              <input
+                type="tel"
+                placeholder="e.g. 9876543210"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+              />
+            </div>
+          </div>
+
+          {formError && (
+            <p className="mt-3 text-sm text-red-600 bg-red-100 px-3 py-2 rounded-lg">
+              ⚠️ {formError}
+            </p>
+          )}
+
+          <div className="flex gap-3 mt-4">
             <button
               onClick={handleSubmit}
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              disabled={submitting}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60"
             >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {editingId ? "Update Address" : "Save Address"}
             </button>
             <button
-              onClick={() => setShowForm(false)}
-              className="bg-gray-400 text-white px-4 py-2 rounded"
+              onClick={cancelForm}
+              disabled={submitting}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
             >
               Cancel
             </button>
@@ -491,14 +717,10 @@ function AddressesSection() {
   );
 }
 
-/* ───────────────────────────────────────────── */
-/* SUPPORT SECTION */
-/* ───────────────────────────────────────────── */
-
+// ── Support Section ───────────────────────────────────────────────
 function SupportSection() {
   const [tickets, setTickets] = useState([]);
   const [showForm, setShowForm] = useState(false);
-
   const [formData, setFormData] = useState({
     orderId: "",
     category: "",
@@ -507,17 +729,10 @@ function SupportSection() {
 
   const handleSubmit = () => {
     if (!formData.orderId || !formData.query) return alert("Fill all fields");
-
     setTickets([
       ...tickets,
-      {
-        id: Date.now(),
-        ...formData,
-        status: "Open",
-        priority: "Medium",
-      },
+      { id: Date.now(), ...formData, status: "Open", priority: "Medium" },
     ]);
-
     setShowForm(false);
     setFormData({ orderId: "", category: "", query: "" });
   };
@@ -573,7 +788,6 @@ function SupportSection() {
               setFormData({ ...formData, query: e.target.value })
             }
           />
-
           <div className="flex gap-3">
             <button
               onClick={handleSubmit}
@@ -616,7 +830,7 @@ export default function Profile() {
       case "Profile":
         return <ProfileSection user={user} />;
       case "Addresses":
-        return <AddressesSection />;
+        return <AddressesSection token={token} />;
       case "Customer Support":
         return <SupportSection />;
       default:
@@ -639,7 +853,6 @@ export default function Profile() {
       {/* ── Sidebar ──────────────────────────────────────────────── */}
       <div className="w-full md:w-72 flex-shrink-0">
         <div className="bg-white shadow rounded-2xl p-5 space-y-5">
-          {/* Avatar + Name */}
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
               {initials}
@@ -657,7 +870,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Menu */}
           <nav className="space-y-1">
             {menuItems.map(({ label, Icon }) => (
               <button
@@ -675,7 +887,6 @@ export default function Profile() {
             ))}
           </nav>
 
-          {/* Logout */}
           <button
             onClick={() => dispatch(logout())}
             className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl font-semibold text-sm transition-colors"
