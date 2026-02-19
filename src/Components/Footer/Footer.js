@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   FaFacebookF,
@@ -7,6 +8,30 @@ import {
 } from "react-icons/fa";
 
 const Footer = () => {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          "https://api.minutos.in/api/category/categories",
+        );
+        const data = await response.json();
+        // Assuming the API returns an array or an object with a categories property
+        setCategories(Array.isArray(data) ? data : data.categories || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Logic to split categories into 5 columns to match your UI
+  const columns = [[], [], [], [], []];
+  categories.forEach((cat, index) => {
+    columns[index % 5].push(cat);
+  });
+
   return (
     <footer className="bg-white border-t border-gray-200">
       {/* Popular Searches Section */}
@@ -48,92 +73,25 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Categories Section */}
+      {/* Categories Section - NOW DYNAMIC */}
       <div className="px-6 py-8">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-lg font-bold mb-6 text-gray-800">Categories</h3>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Fruits & Vegetables
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Atta, Rice, Oil & Dal
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Masala & Dry Fruits
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Sweet Cravings
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Frozen Food & Ice Cream
-              </h4>
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Baby Food
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Dairy, Bread & Eggs
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Cold Drinks & Juices
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Munchies
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Meats, Fish & Eggs
-              </h4>
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Breakfast & Sauces
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Tea, Coffee & More
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Biscuits
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Makeup & Beauty
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Bath & Body
-              </h4>
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Cleaning Essentials
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Home Needs
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Pharmaceuticals & Accessories
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Hygiene & Grooming
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Health & Baby Care
-              </h4>
-            </div>
-
-            <div>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Humayama Brands
-              </h4>
-              <h4 className="mb-2 text-sm text-gray-500 font-medium">
-                Paar Corner
-              </h4>
-            </div>
+            {columns.map((col, colIdx) => (
+              <div key={colIdx}>
+                {col.map((category) => (
+                  <Link
+                    key={category._id}
+                    to={`/subCategory/${category.name}`}
+                    className="block mb-2 text-sm text-gray-500 font-medium hover:text-gray-800 transition-colors"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -141,7 +99,6 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="bg-gray-100 py-8">
         <div className="max-w-6xl mx-auto px-6">
-          {/* TOP FOOTER */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center">
               <img
@@ -149,53 +106,31 @@ const Footer = () => {
                 alt="Minutos Logo"
                 className="h-8 w-auto mr-3"
               />
-
               <span className="ml-4 text-sm text-gray-500">
                 © Minutos Technologies India Pvt. Ltd.
               </span>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <Link
-                to="/"
-                className="text-sm text-gray-500 hover:text-gray-800"
-              >
-                Home
-              </Link>
-              <Link
-                to="/delivery-areas"
-                className="text-sm text-gray-500 hover:text-gray-800"
-              >
-                Delivery Areas
-              </Link>
-              <Link
-                to="/careers"
-                className="text-sm text-gray-500 hover:text-gray-800"
-              >
-                Careers
-              </Link>
-              <Link
-                to="/support"
-                className="text-sm text-gray-500 hover:text-gray-800"
-              >
-                Customer Support
-              </Link>
-              <Link
-                to="/press"
-                className="text-sm text-gray-500 hover:text-gray-800"
-              >
-                Press
-              </Link>
-              <Link
-                to="/blog"
-                className="text-sm text-gray-500 hover:text-gray-800"
-              >
-                Blog
-              </Link>
+              {[
+                "Home",
+                "Delivery Areas",
+                "Careers",
+                "Customer Support",
+                "Press",
+                "Blog",
+              ].map((item) => (
+                <Link
+                  key={item}
+                  to={`/${item.toLowerCase().replace(" ", "-")}`}
+                  className="text-sm text-gray-500 hover:text-gray-800"
+                >
+                  {item}
+                </Link>
+              ))}
             </div>
           </div>
 
-          {/* MID FOOTER */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex flex-wrap gap-4">
@@ -237,7 +172,6 @@ const Footer = () => {
                 </Link>
               </div>
 
-              {/* Download App */}
               <div className="flex flex-col items-start gap-3">
                 <h4 className="font-semibold text-sm text-gray-800">
                   Download App
@@ -286,18 +220,16 @@ const Footer = () => {
           {/* SOCIAL ICONS */}
           <div className="mt-6 flex justify-center md:justify-start">
             <div className="flex gap-4">
-              <div className="cursor-pointer w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <FaFacebookF size={14} />
-              </div>
-              <div className="cursor-pointer w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <FaTwitter size={14} />
-              </div>
-              <div className="cursor-pointer w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <FaInstagram size={14} />
-              </div>
-              <div className="cursor-pointer w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <FaLinkedinIn size={14} />
-              </div>
+              {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn].map(
+                (Icon, i) => (
+                  <div
+                    key={i}
+                    className="cursor-pointer w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 transition-colors"
+                  >
+                    <Icon size={14} />
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </div>
