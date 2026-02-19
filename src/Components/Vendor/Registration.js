@@ -149,7 +149,7 @@ export default function VendorRegistrationForm() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:8000/api/vendor/open", {
+      const response = await fetch("https://api.minutos.in/api/vendor/open", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
