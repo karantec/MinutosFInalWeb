@@ -141,15 +141,15 @@ export default function VendorRegistrationForm() {
       setTouched(
         Object.keys(formData).reduce(
           (acc, key) => ({ ...acc, [key]: true }),
-          {}
-        )
+          {},
+        ),
       );
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("https://api.minutos.in/api/vendor", {
+      const response = await fetch("http://localhost:8000/api/vendor/open", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
