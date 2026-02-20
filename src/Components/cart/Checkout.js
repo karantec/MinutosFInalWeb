@@ -25,14 +25,13 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 // ─────────────────────────────────────────────────────────────────
-// CONFIG
+// CONFIG — change to "https://api.minutos.in/api" for production
 // ─────────────────────────────────────────────────────────────────
-const API_BASE = "https://api.minutos.in/api";
+const API_BASE = "https://api.minutos.in/api"; // ✅ FIXED: was pointing to production
 
-// All address endpoints live under /api/auth (same router as UserRoutes)
 const authApi = axios.create({ baseURL: `${API_BASE}/auth` });
 const mainApi = axios.create({ baseURL: API_BASE });
 
@@ -76,13 +75,7 @@ function StepBar({ current }) {
           <React.Fragment key={step}>
             <div className="flex items-center gap-2">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                  done
-                    ? "bg-emerald-500 text-white shadow-md shadow-emerald-200"
-                    : active
-                      ? "bg-red-600 text-white shadow-md shadow-red-200 ring-4 ring-red-100"
-                      : "bg-gray-100 text-gray-400"
-                }`}
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${done ? "bg-emerald-500 text-white shadow-md shadow-emerald-200" : active ? "bg-red-600 text-white shadow-md shadow-red-200 ring-4 ring-red-100" : "bg-gray-100 text-gray-400"}`}
               >
                 {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
               </div>
@@ -104,9 +97,6 @@ function StepBar({ current }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// SECTION CARD WRAPPER
-// ─────────────────────────────────────────────────────────────────
 function Card({ children, className = "" }) {
   return (
     <div
@@ -139,65 +129,6 @@ function SectionHeader({ icon: Icon, title, subtitle, badge }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// VENDOR SELECTOR
-// ─────────────────────────────────────────────────────────────────
-function VendorSelector({ token }) {
-  const [vendors, setVendors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const dropdownRef = useRef(null);
-
-  // Expose selected vendor up — passed via callback prop
-  // (We'll lift state to parent via prop)
-  const { onVendorSelect } = VendorSelector;
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const res = await mainApi.get("/vendor", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const raw = res.data;
-      const list = Array.isArray(raw) ? raw : raw?.vendors || raw?.data || [];
-      setVendors(list);
-    } catch {
-      setError("Could not load vendors.");
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Close on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return {
-    vendors,
-    loading,
-    error,
-    open,
-    setOpen,
-    selected,
-    setSelected,
-    dropdownRef,
-    reload: load,
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
 export default function PaymentCheckout() {
@@ -206,10 +137,9 @@ export default function PaymentCheckout() {
   const { user, token } = useSelector((s) => s.auth);
   const { cartItems } = useSelector((s) => s.cart);
 
-  // ── Step tracking ────────────────────────────────────────────
-  const [step, setStep] = useState(0); // 0=vendor 1=address 2=payment
+  const [step, setStep] = useState(0);
 
-  // ── Vendor ───────────────────────────────────────────────────
+  // Vendor
   const [vendors, setVendors] = useState([]);
   const [vendorLoading, setVendorLoading] = useState(true);
   const [vendorError, setVendorError] = useState("");
@@ -217,11 +147,11 @@ export default function PaymentCheckout() {
   const [vendorOpen, setVendorOpen] = useState(false);
   const vendorRef = useRef(null);
 
-  // ── Address ──────────────────────────────────────────────────
+  // Address
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [addrLoading, setAddrLoading] = useState(true);
   const [selectedAddrId, setSelectedAddrId] = useState(null);
-  const [addrMode, setAddrMode] = useState("saved"); // "saved" | "new"
+  const [addrMode, setAddrMode] = useState("saved");
   const [saveToProfile, setSaveToProfile] = useState(false);
   const [addrLabel, setAddrLabel] = useState("Home");
   const [deletingId, setDeletingId] = useState(null);
@@ -233,7 +163,7 @@ export default function PaymentCheckout() {
     phone: "",
   });
 
-  // ── Payment ──────────────────────────────────────────────────
+  // Payment
   const [paymentMethod, setPaymentMethod] = useState("");
   const [card, setCard] = useState({
     number: "",
@@ -243,14 +173,11 @@ export default function PaymentCheckout() {
   });
   const [upiId, setUpiId] = useState("");
 
-  // ── Order ────────────────────────────────────────────────────
+  // Order
   const [processing, setProcessing] = useState(false);
   const [placed, setPlaced] = useState(null);
   const [globalError, setGlobalError] = useState("");
 
-  // ─────────────────────────────────────────────────────────────
-  // GUARDS
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -264,7 +191,6 @@ export default function PaymentCheckout() {
     loadAddresses();
   }, []);
 
-  // Close vendor dropdown on outside click
   useEffect(() => {
     const h = (e) => {
       if (vendorRef.current && !vendorRef.current.contains(e.target))
@@ -274,9 +200,6 @@ export default function PaymentCheckout() {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
-  // DATA LOADING
-  // ─────────────────────────────────────────────────────────────
   const loadVendors = async () => {
     try {
       setVendorLoading(true);
@@ -297,7 +220,6 @@ export default function PaymentCheckout() {
   const loadAddresses = async () => {
     try {
       setAddrLoading(true);
-      // UserRoutes is mounted at /api/auth — so address endpoints are /api/auth/addresses
       const res = await authApi.get("/addresses", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -331,24 +253,18 @@ export default function PaymentCheckout() {
         if (!next.length) setAddrMode("new");
       }
     } catch {
-      // silently fail — user can retry
+      // silently fail
     } finally {
       setDeletingId(null);
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // TOTALS
-  // ─────────────────────────────────────────────────────────────
   const subtotal = (cartItems || []).reduce(
     (s, i) => s + (i.price || 0) * (i.quantity || 0),
     0,
   );
-  const total = subtotal; // extend with taxes/fees if needed
+  const total = subtotal;
 
-  // ─────────────────────────────────────────────────────────────
-  // CARD FORMATTER
-  // ─────────────────────────────────────────────────────────────
   const formatCard = (field, val) => {
     if (field === "number") {
       val = val
@@ -365,21 +281,12 @@ export default function PaymentCheckout() {
     setCard((prev) => ({ ...prev, [field]: val }));
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // STEP VALIDATION
-  // ─────────────────────────────────────────────────────────────
   const canProceedStep0 = !!selectedVendor;
   const canProceedStep1 = (() => {
     if (addrMode === "saved") return !!selectedAddrId;
     return newAddr.street && newAddr.city && newAddr.pincode && newAddr.phone;
   })();
-  const canProceedStep2 = (() => {
-    if (!paymentMethod) return false;
-    if (paymentMethod === "card")
-      return card.number && card.name && card.expiry && card.cvv;
-    if (paymentMethod === "upi") return upiId.trim().length > 0;
-    return true; // cod
-  })();
+  const canProceedStep2 = !!paymentMethod;
 
   const effectiveAddress =
     addrMode === "saved"
@@ -387,7 +294,7 @@ export default function PaymentCheckout() {
       : newAddr;
 
   // ─────────────────────────────────────────────────────────────
-  // PLACE ORDER
+  // PLACE ORDER + RAZORPAY
   // ─────────────────────────────────────────────────────────────
   const placeOrder = async () => {
     setGlobalError("");
@@ -404,9 +311,7 @@ export default function PaymentCheckout() {
         const r = await authApi.post(
           "/addresses",
           { ...addr, label: addrLabel },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         if (r.data?.address) setSavedAddresses((p) => [...p, r.data.address]);
       } catch {
@@ -427,22 +332,97 @@ export default function PaymentCheckout() {
 
     setProcessing(true);
     try {
+      // 1️⃣ Create order in DB
       const res = await mainApi.post("/order/create", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.data?.success) {
-        setPlaced(res.data.order);
-      } else {
+
+      if (!res.data?.success) {
         setGlobalError(
           res.data?.message || "Order creation failed. Please try again.",
         );
+        setProcessing(false);
+        return;
       }
+
+      const createdOrder = res.data.order;
+
+      // 2️⃣ COD → go straight to success
+      if (paymentMethod === "cod") {
+        setPlaced(createdOrder);
+        setProcessing(false);
+        return;
+      }
+
+      // 3️⃣ UPI / Card → open Razorpay
+      const rzpRes = await mainApi.post(
+        "/payment/create-order",
+        { orderId: createdOrder._id },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      const { razorpayOrderId, amount, currency, key } = rzpRes.data;
+
+      const options = {
+        key,
+        amount,
+        currency,
+        name: "Minutos",
+        description: "Order Payment",
+        order_id: razorpayOrderId,
+        prefill: {
+          name: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+          email: user?.email || "",
+          contact: addr?.phone || "",
+        },
+        theme: { color: "#dc2626" },
+
+        // ✅ Success: verify with backend
+        handler: async (response) => {
+          try {
+            const verifyRes = await mainApi.post(
+              "/payment/verify",
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: createdOrder._id,
+              },
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (verifyRes.data?.success) {
+              setPlaced(verifyRes.data.order || createdOrder);
+            } else {
+              setGlobalError(
+                "Payment verification failed. Please contact support.",
+              );
+            }
+          } catch (err) {
+            setGlobalError(
+              "Payment done but verification failed. Please contact support.",
+            );
+          }
+        },
+
+        modal: {
+          ondismiss: () => {
+            setGlobalError("Payment cancelled. You can retry from My Orders.");
+            setProcessing(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (r) => {
+        setGlobalError(`Payment failed: ${r.error.description}`);
+        setProcessing(false);
+      });
+      rzp.open();
     } catch (err) {
       setGlobalError(
         err.response?.data?.message ||
           "Something went wrong. Please try again.",
       );
-    } finally {
       setProcessing(false);
     }
   };
@@ -454,14 +434,12 @@ export default function PaymentCheckout() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-orange-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100">
-          {/* Animated tick */}
           <div className="relative w-24 h-24 mx-auto mb-6">
             <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-30" />
             <div className="relative w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
               <Check className="w-12 h-12 text-white" strokeWidth={3} />
             </div>
           </div>
-
           <h2 className="text-2xl font-black text-gray-900 mb-1">
             Order Confirmed!
           </h2>
@@ -471,13 +449,9 @@ export default function PaymentCheckout() {
               {selectedVendor?.businessName}
             </span>
           </p>
-
-          {/* ETA pill */}
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            <Clock className="w-4 h-4" />
-            Arriving in ~18 minutes
+            <Clock className="w-4 h-4" /> Arriving in ~18 minutes
           </div>
-
           <div className="space-y-3 mb-6">
             <div className="flex justify-between items-center bg-gray-50 rounded-xl px-4 py-3">
               <span className="text-xs text-gray-500 font-medium">
@@ -506,7 +480,6 @@ export default function PaymentCheckout() {
               </span>
             </div>
           </div>
-
           <div className="flex gap-3">
             <button
               onClick={() => navigate("/my-orders")}
@@ -531,7 +504,6 @@ export default function PaymentCheckout() {
   // ─────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50/80">
-      {/* Top bar */}
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -539,8 +511,7 @@ export default function PaymentCheckout() {
             <span className="font-black text-gray-900 text-sm">Checkout</span>
           </div>
           <div className="text-xs text-gray-500 flex items-center gap-1">
-            <Lock className="w-3 h-3 text-emerald-500" />
-            Secure Checkout
+            <Lock className="w-3 h-3 text-emerald-500" /> Secure Checkout
           </div>
         </div>
       </div>
@@ -549,9 +520,9 @@ export default function PaymentCheckout() {
         <StepBar current={step} />
 
         <div className="grid lg:grid-cols-5 gap-5">
-          {/* ── LEFT (3/5) ─────────────────────────────────── */}
+          {/* LEFT */}
           <div className="lg:col-span-3 space-y-4">
-            {/* ── STEP 0: VENDOR ────────────────────────────── */}
+            {/* STEP 0: VENDOR */}
             <Card
               className={`p-5 transition-all duration-300 ${step === 0 ? "ring-2 ring-red-400 ring-offset-1" : ""}`}
             >
@@ -570,8 +541,6 @@ export default function PaymentCheckout() {
                   ) : null
                 }
               />
-
-              {/* Collapsed summary */}
               {selectedVendor && step !== 0 ? (
                 <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
                   <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
@@ -612,11 +581,7 @@ export default function PaymentCheckout() {
                     <div className="relative" ref={vendorRef}>
                       <button
                         onClick={() => setVendorOpen((o) => !o)}
-                        className={`w-full flex items-center justify-between px-4 py-3.5 border-2 rounded-xl transition-all ${
-                          selectedVendor
-                            ? "border-red-400 bg-red-50"
-                            : "border-gray-200 hover:border-gray-300 bg-white"
-                        }`}
+                        className={`w-full flex items-center justify-between px-4 py-3.5 border-2 rounded-xl transition-all ${selectedVendor ? "border-red-400 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-white"}`}
                       >
                         {selectedVendor ? (
                           <div className="flex items-center gap-3">
@@ -643,7 +608,6 @@ export default function PaymentCheckout() {
                           className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${vendorOpen ? "rotate-180" : ""}`}
                         />
                       </button>
-
                       {vendorOpen && (
                         <div className="absolute z-20 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl shadow-gray-200/80 max-h-60 overflow-y-auto">
                           {vendors.map((v) => (
@@ -686,7 +650,6 @@ export default function PaymentCheckout() {
                       )}
                     </div>
                   )}
-
                   {selectedVendor && (
                     <button
                       onClick={() => setStep(1)}
@@ -699,7 +662,7 @@ export default function PaymentCheckout() {
               )}
             </Card>
 
-            {/* ── STEP 1: ADDRESS ───────────────────────────── */}
+            {/* STEP 1: ADDRESS */}
             <Card
               className={`p-5 transition-all duration-300 ${step < 1 ? "opacity-60 pointer-events-none" : ""} ${step === 1 ? "ring-2 ring-red-400 ring-offset-1" : ""}`}
             >
@@ -718,8 +681,6 @@ export default function PaymentCheckout() {
                   ) : null
                 }
               />
-
-              {/* Collapsed summary when done */}
               {canProceedStep1 && step > 1 ? (
                 <div className="bg-gray-50 rounded-xl px-4 py-3">
                   {addrMode === "saved" && effectiveAddress ? (
@@ -761,20 +722,14 @@ export default function PaymentCheckout() {
                 </div>
               ) : step === 1 ? (
                 <>
-                  {/* Mode tabs */}
                   {(savedAddresses.length > 0 || addrLoading) && (
                     <div className="flex gap-2 mb-4">
                       {savedAddresses.length > 0 && (
                         <button
                           onClick={() => setAddrMode("saved")}
-                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                            addrMode === "saved"
-                              ? "bg-red-600 text-white shadow-md shadow-red-200"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                          }`}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${addrMode === "saved" ? "bg-red-600 text-white shadow-md shadow-red-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
                         >
-                          <BookMarked className="w-3.5 h-3.5" />
-                          Saved Addresses
+                          <BookMarked className="w-3.5 h-3.5" /> Saved Addresses
                           <span
                             className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${addrMode === "saved" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}
                           >
@@ -784,18 +739,13 @@ export default function PaymentCheckout() {
                       )}
                       <button
                         onClick={() => setAddrMode("new")}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                          addrMode === "new"
-                            ? "bg-red-600 text-white shadow-md shadow-red-200"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${addrMode === "new" ? "bg-red-600 text-white shadow-md shadow-red-200" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
                       >
                         <Plus className="w-3.5 h-3.5" /> New Address
                       </button>
                     </div>
                   )}
 
-                  {/* Saved addresses */}
                   {addrMode === "saved" && (
                     <div className="space-y-2">
                       {addrLoading ? (
@@ -821,26 +771,16 @@ export default function PaymentCheckout() {
                             <div
                               key={addr._id}
                               onClick={() => setSelectedAddrId(addr._id)}
-                              className={`group relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 ${
-                                isSelected
-                                  ? "border-red-400 bg-red-50/50 shadow-sm"
-                                  : "border-gray-150 bg-white hover:border-gray-300"
-                              }`}
+                              className={`group relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 ${isSelected ? "border-red-400 bg-red-50/50 shadow-sm" : "border-gray-150 bg-white hover:border-gray-300"}`}
                             >
                               <div className="flex items-start gap-3">
-                                {/* Radio */}
                                 <div
-                                  className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                                    isSelected
-                                      ? "border-red-500 bg-red-500"
-                                      : "border-gray-300"
-                                  }`}
+                                  className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? "border-red-500 bg-red-500" : "border-gray-300"}`}
                                 >
                                   {isSelected && (
                                     <div className="w-1.5 h-1.5 rounded-full bg-white" />
                                   )}
                                 </div>
-
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <LabelBadge label={addr.label} />
@@ -864,7 +804,6 @@ export default function PaymentCheckout() {
                                     {addr.phone}
                                   </p>
                                 </div>
-
                                 <button
                                   onClick={(e) => deleteAddress(addr._id, e)}
                                   disabled={deletingId === addr._id}
@@ -884,7 +823,6 @@ export default function PaymentCheckout() {
                     </div>
                   )}
 
-                  {/* New address form */}
                   {addrMode === "new" && (
                     <div className="space-y-3">
                       <div>
@@ -971,8 +909,6 @@ export default function PaymentCheckout() {
                           />
                         </div>
                       </div>
-
-                      {/* Save to profile */}
                       <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-200">
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input
@@ -999,11 +935,7 @@ export default function PaymentCheckout() {
                                 <button
                                   key={lbl}
                                   onClick={() => setAddrLabel(lbl)}
-                                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                                    addrLabel === lbl
-                                      ? "bg-red-600 text-white border-red-600 shadow-md shadow-red-200"
-                                      : "bg-white text-gray-600 border-gray-200 hover:border-red-300"
-                                  }`}
+                                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${addrLabel === lbl ? "bg-red-600 text-white border-red-600 shadow-md shadow-red-200" : "bg-white text-gray-600 border-gray-200 hover:border-red-300"}`}
                                 >
                                   <Icon className="w-3 h-3" /> {lbl}
                                 </button>
@@ -1027,7 +959,7 @@ export default function PaymentCheckout() {
               ) : null}
             </Card>
 
-            {/* ── STEP 2: PAYMENT ───────────────────────────── */}
+            {/* STEP 2: PAYMENT */}
             <Card
               className={`p-5 transition-all duration-300 ${step < 2 ? "opacity-60 pointer-events-none" : ""} ${step === 2 ? "ring-2 ring-red-400 ring-offset-1" : ""}`}
             >
@@ -1036,21 +968,19 @@ export default function PaymentCheckout() {
                 title="Payment Method"
                 subtitle="How would you like to pay?"
               />
-
               <div className="space-y-3">
-                {/* ── Card ── */}
                 {[
                   {
                     id: "card",
                     Icon: CreditCard,
                     label: "Credit / Debit Card",
-                    sub: "Visa, Mastercard, RuPay",
+                    sub: "Visa, Mastercard, RuPay — via Razorpay",
                   },
                   {
                     id: "upi",
                     Icon: Wallet,
                     label: "UPI",
-                    sub: "GPay, PhonePe, Paytm",
+                    sub: "GPay, PhonePe, Paytm — via Razorpay",
                   },
                   {
                     id: "cod",
@@ -1062,11 +992,7 @@ export default function PaymentCheckout() {
                   <div key={id}>
                     <button
                       onClick={() => setPaymentMethod(id)}
-                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        paymentMethod === id
-                          ? "border-red-400 bg-red-50/40 shadow-sm"
-                          : "border-gray-200 bg-white hover:border-gray-300"
-                      }`}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${paymentMethod === id ? "border-red-400 bg-red-50/40 shadow-sm" : "border-gray-200 bg-white hover:border-gray-300"}`}
                     >
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${paymentMethod === id ? "bg-red-600" : "bg-gray-100"}`}
@@ -1090,86 +1016,23 @@ export default function PaymentCheckout() {
                       </div>
                     </button>
 
-                    {/* Card details */}
+                    {/* Card/UPI info note — Razorpay handles actual input */}
                     {id === "card" && paymentMethod === "card" && (
-                      <div className="mt-2 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                            Card Number
-                          </label>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={card.number}
-                            onChange={(e) =>
-                              formatCard("number", e.target.value)
-                            }
-                            placeholder="1234 5678 9012 3456"
-                            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white placeholder-gray-300"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                            Cardholder Name
-                          </label>
-                          <input
-                            type="text"
-                            value={card.name}
-                            onChange={(e) =>
-                              setCard({ ...card, name: e.target.value })
-                            }
-                            placeholder="Name on card"
-                            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white placeholder-gray-300"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                              Expiry
-                            </label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={card.expiry}
-                              onChange={(e) =>
-                                formatCard("expiry", e.target.value)
-                              }
-                              placeholder="MM/YY"
-                              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white placeholder-gray-300"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                              CVV
-                            </label>
-                            <input
-                              type="password"
-                              inputMode="numeric"
-                              value={card.cvv}
-                              onChange={(e) =>
-                                formatCard("cvv", e.target.value)
-                              }
-                              placeholder="•••"
-                              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white placeholder-gray-300"
-                            />
-                          </div>
-                        </div>
+                      <div className="mt-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <p className="text-xs text-gray-500 flex items-center gap-2">
+                          <Lock className="w-3.5 h-3.5 text-emerald-500" />
+                          You'll enter your card details securely in the
+                          Razorpay payment window.
+                        </p>
                       </div>
                     )}
-
-                    {/* UPI ID field */}
                     {id === "upi" && paymentMethod === "upi" && (
                       <div className="mt-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                          UPI ID
-                        </label>
-                        <input
-                          type="text"
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="yourname@upi"
-                          className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white placeholder-gray-300"
-                        />
+                        <p className="text-xs text-gray-500 flex items-center gap-2">
+                          <Lock className="w-3.5 h-3.5 text-emerald-500" />
+                          You'll complete UPI payment securely in the Razorpay
+                          window.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1177,7 +1040,6 @@ export default function PaymentCheckout() {
               </div>
             </Card>
 
-            {/* Global error */}
             {globalError && (
               <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3.5 rounded-xl text-sm">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -1186,15 +1048,13 @@ export default function PaymentCheckout() {
             )}
           </div>
 
-          {/* ── RIGHT SUMMARY (2/5) ──────────────────────────── */}
+          {/* RIGHT SUMMARY */}
           <div className="lg:col-span-2">
             <div className="sticky top-20 space-y-4">
               <Card className="p-5">
                 <h2 className="text-base font-black text-gray-900 mb-4 flex items-center gap-2">
                   <Package className="w-4 h-4 text-red-500" /> Order Summary
                 </h2>
-
-                {/* Vendor */}
                 {selectedVendor && (
                   <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5 mb-3">
                     <Store className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
@@ -1203,8 +1063,6 @@ export default function PaymentCheckout() {
                     </span>
                   </div>
                 )}
-
-                {/* Delivering to */}
                 {effectiveAddress?.street && (
                   <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5 mb-3">
                     <MapPin className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -1221,8 +1079,6 @@ export default function PaymentCheckout() {
                     </div>
                   </div>
                 )}
-
-                {/* Items */}
                 <div className="space-y-2.5 max-h-48 overflow-y-auto mb-4 pr-0.5">
                   {(cartItems || []).map((item, idx) => (
                     <div
@@ -1257,8 +1113,6 @@ export default function PaymentCheckout() {
                     </div>
                   ))}
                 </div>
-
-                {/* Totals */}
                 <div className="border-t border-dashed pt-3 space-y-2">
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>Subtotal ({(cartItems || []).length} items)</span>
@@ -1275,7 +1129,6 @@ export default function PaymentCheckout() {
                 </div>
               </Card>
 
-              {/* Place Order Button */}
               <button
                 onClick={placeOrder}
                 disabled={
@@ -1295,19 +1148,26 @@ export default function PaymentCheckout() {
               >
                 {processing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Placing
-                    Order...
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {paymentMethod === "cod"
+                      ? "Placing Order..."
+                      : "Opening Payment..."}
                   </>
                 ) : (
                   <>
-                    <Lock className="w-4 h-4" /> Place Order · ₹{total}
+                    <Lock className="w-4 h-4" />
+                    {paymentMethod === "cod"
+                      ? `Place Order · ₹${total}`
+                      : `Pay ₹${total}`}
                   </>
                 )}
               </button>
 
               <p className="text-center text-[11px] text-gray-400 flex items-center justify-center gap-1">
                 <Lock className="w-2.5 h-2.5 text-emerald-400" />
-                256-bit SSL encrypted & secured
+                {paymentMethod === "cod"
+                  ? "Pay safely at your doorstep"
+                  : "Secured by Razorpay"}
               </p>
             </div>
           </div>

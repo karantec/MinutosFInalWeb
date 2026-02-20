@@ -7,21 +7,19 @@ import {
   Lock,
   ShoppingBag,
   MapPin,
-  User,
-  Phone,
-  Mail,
   ChevronDown,
   Store,
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 import axios from "axios";
-import { clearCartAsync } from "../store/cartSlice"; // if you have this action, else we'll clear via API
-import { useAppDispatch } from "../hooks/useAppDispatch";
 import { useSelector } from "react-redux";
+import { useAppDispatch } from "../hooks/useAppDispatch";
 
-const API_BASE = "https://api.minutos.in/api"; // ← update if needed
+const API_BASE = "http://localhost:8000/api";
+
+// ✅ Fresh axios instance — bypasses any global interceptors/baseURL
+const localAxios = axios.create();
 
 export default function PaymentCheckout() {
   const navigate = useNavigate();
@@ -30,14 +28,7 @@ export default function PaymentCheckout() {
   const { user, token } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.cart);
 
-  // ── Payment & form state ──────────────────────────────────────────
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: "",
-    cardName: "",
-    expiry: "",
-    cvv: "",
-  });
   const [shippingAddress, setShippingAddress] = useState({
     street: "",
     city: "",
@@ -45,22 +36,26 @@ export default function PaymentCheckout() {
     pincode: "",
     phone: "",
   });
-
-  // ── Vendor state ──────────────────────────────────────────────────
   const [vendors, setVendors] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [vendorLoading, setVendorLoading] = useState(true);
   const [vendorError, setVendorError] = useState("");
   const [vendorDropdownOpen, setVendorDropdownOpen] = useState(false);
-
-  // ── Order state ───────────────────────────────────────────────────
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [orderError, setOrderError] = useState("");
 
-  // ── Fetch vendors on mount ────────────────────────────────────────
   useEffect(() => {
+    console.log("🟡 Component mounted");
+    console.log("🟡 user:", user);
+    console.log("🟡 token:", token ? "EXISTS ✅" : "MISSING ❌");
+    console.log("🟡 cartItems:", cartItems);
+    console.log("🟡 API_BASE:", API_BASE);
+    console.log(
+      "🟡 window.Razorpay:",
+      window.Razorpay ? "LOADED ✅" : "NOT LOADED ❌",
+    );
     if (!user) {
       navigate("/login");
       return;
@@ -76,49 +71,31 @@ export default function PaymentCheckout() {
     try {
       setVendorLoading(true);
       setVendorError("");
-      const res = await axios.get(`${API_BASE}/vendor`, {
+      console.log("🟡 Fetching vendors from:", `${API_BASE}/vendor`);
+      const res = await localAxios.get(`${API_BASE}/vendor`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // API returns array directly OR wrapped in vendors/data key
+      console.log("🟡 Vendors response:", res.data);
       const raw = res.data;
       const list = Array.isArray(raw) ? raw : raw?.vendors || raw?.data || [];
       setVendors(list);
     } catch (err) {
-      console.error("Failed to fetch vendors:", err);
+      console.error(
+        "❌ Failed to fetch vendors:",
+        err.response?.data || err.message,
+      );
       setVendorError("Could not load vendors. Please try again.");
     } finally {
       setVendorLoading(false);
     }
   };
 
-  // ── Totals ────────────────────────────────────────────────────────
   const subtotal = cartItems.reduce(
     (acc, item) => acc + (item.price || 0) * (item.quantity || 0),
     0,
   );
   const total = subtotal;
 
-  // ── Card input formatter ──────────────────────────────────────────
-  const handleCardInputChange = (e) => {
-    const { name, value } = e.target;
-    let v = value;
-    if (name === "cardNumber") {
-      v = v
-        .replace(/\s/g, "")
-        .replace(/(\d{4})/g, "$1 ")
-        .trim();
-      if (v.length > 19) return;
-    } else if (name === "expiry") {
-      v = v.replace(/\D/g, "").replace(/(\d{2})(\d)/, "$1/$2");
-      if (v.length > 5) return;
-    } else if (name === "cvv") {
-      v = v.replace(/\D/g, "");
-      if (v.length > 3) return;
-    }
-    setCardDetails({ ...cardDetails, [name]: v });
-  };
-
-  // ── Validation ────────────────────────────────────────────────────
   const validate = () => {
     if (!selectedVendor) {
       setOrderError("Please select a vendor to deliver your order.");
@@ -127,17 +104,6 @@ export default function PaymentCheckout() {
     if (!paymentMethod) {
       setOrderError("Please select a payment method.");
       return false;
-    }
-    if (paymentMethod === "card") {
-      if (
-        !cardDetails.cardNumber ||
-        !cardDetails.cardName ||
-        !cardDetails.expiry ||
-        !cardDetails.cvv
-      ) {
-        setOrderError("Please fill in all card details.");
-        return false;
-      }
     }
     if (
       !shippingAddress.street ||
@@ -151,50 +117,183 @@ export default function PaymentCheckout() {
     return true;
   };
 
-  // ── Place Order ───────────────────────────────────────────────────
-  const handlePlaceOrder = async () => {
-    setOrderError("");
-    if (!validate()) return;
+  const openRazorpay = async (createdOrder) => {
+    console.log("4️⃣ openRazorpay() called — orderId:", createdOrder._id);
+    console.log(
+      "4️⃣ window.Razorpay:",
+      window.Razorpay ? "LOADED ✅" : "NOT LOADED ❌",
+    );
+    try {
+      console.log("5️⃣ Calling:", `${API_BASE}/payment/create-order`);
+      const rzpRes = await localAxios.post(
+        `${API_BASE}/payment/create-order`,
+        { orderId: createdOrder._id },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      console.log("6️⃣ payment/create-order response:", rzpRes.data);
 
-    // Build items array for the API
-    const items = cartItems.map((item) => ({
-      product: item.productId || item.product?._id || item._id,
-      quantity: item.quantity,
-    }));
+      const { razorpayOrderId, amount, currency, key } = rzpRes.data;
+      console.log(
+        "7️⃣ key:",
+        key,
+        "| amount:",
+        amount,
+        "| razorpayOrderId:",
+        razorpayOrderId,
+      );
+
+      if (!key) {
+        console.error("❌ key is MISSING from backend response!");
+        setOrderError("Payment config error: key missing from server.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const options = {
+        key,
+        amount,
+        currency,
+        name: "Minutos",
+        description: "Order Payment",
+        order_id: razorpayOrderId,
+        prefill: {
+          name: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+          email: user?.email || "",
+          contact: shippingAddress.phone || user?.phone || "",
+        },
+        method: paymentMethod === "upi" ? { upi: true } : { card: true },
+        theme: { color: "#dc2626" },
+        handler: async (response) => {
+          console.log("8️⃣ Payment success:", response);
+          try {
+            const verifyRes = await localAxios.post(
+              `${API_BASE}/payment/verify`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: createdOrder._id,
+              },
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            console.log("9️⃣ Verify response:", verifyRes.data);
+            if (verifyRes.data?.success) {
+              setPlacedOrder(verifyRes.data.order || createdOrder);
+              setOrderComplete(true);
+            } else {
+              setOrderError(
+                "Payment verification failed. Please contact support.",
+              );
+            }
+          } catch (err) {
+            console.error(
+              "❌ Verification error:",
+              err.response?.data || err.message,
+            );
+            setOrderError(
+              "Payment done but verification failed. Please contact support.",
+            );
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            console.log("⚠️ Razorpay modal dismissed");
+            setOrderError(
+              "Payment was cancelled. You can retry from My Orders.",
+            );
+            setIsProcessing(false);
+          },
+        },
+      };
+
+      console.log("🔟 Creating Razorpay instance...");
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response) => {
+        console.error("❌ Payment failed:", response.error);
+        setOrderError(`Payment failed: ${response.error.description}`);
+        setIsProcessing(false);
+      });
+      console.log("🔟 Calling rzp.open()...");
+      rzp.open();
+      console.log("✅ rzp.open() called!");
+    } catch (err) {
+      console.error(
+        "❌ openRazorpay error:",
+        err.response?.data || err.message,
+      );
+      setOrderError(
+        err.response?.data?.message || "Could not open payment. Please retry.",
+      );
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    console.log("1️⃣ handlePlaceOrder fired");
+    console.log("1️⃣ paymentMethod:", paymentMethod);
+    console.log("1️⃣ selectedVendor:", selectedVendor?._id);
+    console.log("1️⃣ cartItems:", cartItems);
+    setOrderError("");
+    if (!validate()) {
+      console.log("❌ Validation failed");
+      return;
+    }
+
+    const items = cartItems.map((item) => {
+      const productId = item.productId || item.product?._id || item._id;
+      console.log("2️⃣ item:", item.name, "→ productId:", productId);
+      return { product: productId, quantity: item.quantity };
+    });
 
     const payload = {
       vendorId: selectedVendor._id,
       items,
       shippingAddress,
-      paymentMethod, // informational; extend backend if needed
+      paymentMethod,
     };
+    console.log("3️⃣ Payload:", payload);
+    console.log("3️⃣ Posting to:", `${API_BASE}/order/create`);
 
     setIsProcessing(true);
     try {
-      const res = await axios.post(`${API_BASE}/order/create`, payload, {
+      const res = await localAxios.post(`${API_BASE}/order/create`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("3️⃣ Order response:", res.data);
 
-      if (res.data?.success) {
-        setPlacedOrder(res.data.order);
-        setOrderComplete(true);
-        // Optionally clear cart from Redux/backend here
-        // dispatch(clearCartAsync(user.userId));
-      } else {
+      if (!res.data?.success) {
+        console.error("❌ Order failed:", res.data);
         setOrderError(res.data?.message || "Order creation failed.");
+        setIsProcessing(false);
+        return;
       }
+
+      const createdOrder = res.data.order;
+      console.log("3️⃣ Order created successfully:", createdOrder._id);
+
+      if (paymentMethod === "cod") {
+        console.log("✅ COD — going to success");
+        setPlacedOrder(createdOrder);
+        setOrderComplete(true);
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log("3️⃣ Calling openRazorpay...");
+      await openRazorpay(createdOrder);
     } catch (err) {
-      console.error("Order error:", err);
+      console.error(
+        "❌ handlePlaceOrder error:",
+        err.response?.data || err.message,
+      );
       setOrderError(
         err.response?.data?.message ||
-          "Something went wrong placing your order. Please try again.",
+          "Something went wrong. Please try again.",
       );
-    } finally {
       setIsProcessing(false);
     }
   };
 
-  // ── Success screen ────────────────────────────────────────────────
   if (orderComplete && placedOrder) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-rose-100 flex items-center justify-center p-4">
@@ -251,14 +350,11 @@ export default function PaymentCheckout() {
     );
   }
 
-  // ── Main payment page ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-rose-100 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* ── Left Column ─────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Header */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-3">
                 <ShoppingBag className="w-8 h-8 text-red-600" />
@@ -273,17 +369,15 @@ export default function PaymentCheckout() {
               </div>
             </div>
 
-            {/* ── Vendor Selection ─────────────────────────────── */}
+            {/* Vendor Selection */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Store className="w-5 h-5 text-red-600" />
-                Select Vendor
+                <Store className="w-5 h-5 text-red-600" /> Select Vendor
               </h2>
-
               {vendorLoading ? (
                 <div className="flex items-center gap-3 text-gray-500 py-4">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Loading vendors...
+                  <Loader2 className="w-5 h-5 animate-spin" /> Loading
+                  vendors...
                 </div>
               ) : vendorError ? (
                 <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center justify-between">
@@ -301,14 +395,9 @@ export default function PaymentCheckout() {
                 </p>
               ) : (
                 <div className="relative">
-                  {/* Dropdown trigger */}
                   <button
                     onClick={() => setVendorDropdownOpen((o) => !o)}
-                    className={`w-full flex items-center justify-between px-4 py-3 border-2 rounded-xl transition-colors ${
-                      selectedVendor
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 hover:border-red-300"
-                    }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 border-2 rounded-xl transition-colors ${selectedVendor ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-red-300"}`}
                   >
                     {selectedVendor ? (
                       <div className="flex items-center gap-3 text-left">
@@ -330,13 +419,9 @@ export default function PaymentCheckout() {
                       <span className="text-gray-500">Choose a vendor...</span>
                     )}
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-400 transition-transform ${
-                        vendorDropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 text-gray-400 transition-transform ${vendorDropdownOpen ? "rotate-180" : ""}`}
                     />
                   </button>
-
-                  {/* Dropdown list */}
                   {vendorDropdownOpen && (
                     <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
                       {vendors.map((v) => (
@@ -346,9 +431,7 @@ export default function PaymentCheckout() {
                             setSelectedVendor(v);
                             setVendorDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left ${
-                            selectedVendor?._id === v._id ? "bg-red-50" : ""
-                          }`}
+                          className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left ${selectedVendor?._id === v._id ? "bg-red-50" : ""}`}
                         >
                           <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <Store className="w-4 h-4 text-gray-500" />
@@ -358,11 +441,6 @@ export default function PaymentCheckout() {
                               {v.businessName}
                             </p>
                             <p className="text-xs text-gray-500 truncate">
-                              {v.businessType && (
-                                <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">
-                                  {v.businessType}
-                                </span>
-                              )}
                               {[v.area, v.city, v.state]
                                 .filter(Boolean)
                                 .join(", ")}
@@ -379,11 +457,10 @@ export default function PaymentCheckout() {
               )}
             </div>
 
-            {/* ── Delivery Address ──────────────────────────────── */}
+            {/* Delivery Address */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-red-600" />
-                Delivery Address
+                <MapPin className="w-5 h-5 text-red-600" /> Delivery Address
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
@@ -474,38 +551,24 @@ export default function PaymentCheckout() {
               </div>
             </div>
 
-            {/* ── Payment Method ────────────────────────────────── */}
+            {/* Payment Method */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-red-600" />
-                Payment Method
+                <Wallet className="w-5 h-5 text-red-600" /> Payment Method
               </h2>
-
               <div className="space-y-4">
                 {/* Card */}
                 <div
                   onClick={() => setPaymentMethod("card")}
-                  className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                    paymentMethod === "card"
-                      ? "border-red-600 bg-red-50"
-                      : "border-gray-200 hover:border-red-300"
-                  }`}
+                  className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${paymentMethod === "card" ? "border-red-600 bg-red-50" : "border-gray-200 hover:border-red-300"}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-3 rounded-lg ${
-                          paymentMethod === "card"
-                            ? "bg-red-600"
-                            : "bg-gray-100"
-                        }`}
+                        className={`p-3 rounded-lg ${paymentMethod === "card" ? "bg-red-600" : "bg-gray-100"}`}
                       >
                         <CreditCard
-                          className={`w-6 h-6 ${
-                            paymentMethod === "card"
-                              ? "text-white"
-                              : "text-gray-600"
-                          }`}
+                          className={`w-6 h-6 ${paymentMethod === "card" ? "text-white" : "text-gray-600"}`}
                         />
                       </div>
                       <div>
@@ -513,7 +576,7 @@ export default function PaymentCheckout() {
                           Credit / Debit Card
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Pay securely with your card
+                          Pay securely via Razorpay
                         </p>
                       </div>
                     </div>
@@ -523,63 +586,12 @@ export default function PaymentCheckout() {
                       </div>
                     )}
                   </div>
-
                   {paymentMethod === "card" && (
-                    <div className="space-y-4 pt-4 border-t mt-2">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          name="cardNumber"
-                          value={cardDetails.cardNumber}
-                          onChange={handleCardInputChange}
-                          placeholder="1234 5678 9012 3456"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Cardholder Name
-                        </label>
-                        <input
-                          type="text"
-                          name="cardName"
-                          value={cardDetails.cardName}
-                          onChange={handleCardInputChange}
-                          placeholder="John Doe"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Expiry
-                          </label>
-                          <input
-                            type="text"
-                            name="expiry"
-                            value={cardDetails.expiry}
-                            onChange={handleCardInputChange}
-                            placeholder="MM/YY"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            CVV
-                          </label>
-                          <input
-                            type="text"
-                            name="cvv"
-                            value={cardDetails.cvv}
-                            onChange={handleCardInputChange}
-                            placeholder="123"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                        </div>
-                      </div>
+                    <div className="pt-3 border-t mt-3">
+                      <p className="text-sm text-gray-500 flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-green-500" /> You'll enter
+                        card details securely in the Razorpay payment window.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -587,31 +599,21 @@ export default function PaymentCheckout() {
                 {/* UPI */}
                 <div
                   onClick={() => setPaymentMethod("upi")}
-                  className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                    paymentMethod === "upi"
-                      ? "border-red-600 bg-red-50"
-                      : "border-gray-200 hover:border-red-300"
-                  }`}
+                  className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${paymentMethod === "upi" ? "border-red-600 bg-red-50" : "border-gray-200 hover:border-red-300"}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-3 rounded-lg ${
-                          paymentMethod === "upi" ? "bg-red-600" : "bg-gray-100"
-                        }`}
+                        className={`p-3 rounded-lg ${paymentMethod === "upi" ? "bg-red-600" : "bg-gray-100"}`}
                       >
                         <Wallet
-                          className={`w-6 h-6 ${
-                            paymentMethod === "upi"
-                              ? "text-white"
-                              : "text-gray-600"
-                          }`}
+                          className={`w-6 h-6 ${paymentMethod === "upi" ? "text-white" : "text-gray-600"}`}
                         />
                       </div>
                       <div>
                         <h3 className="font-bold text-gray-800">UPI Payment</h3>
                         <p className="text-sm text-gray-500">
-                          Google Pay, PhonePe, Paytm
+                          Google Pay, PhonePe, Paytm & more
                         </p>
                       </div>
                     </div>
@@ -621,30 +623,28 @@ export default function PaymentCheckout() {
                       </div>
                     )}
                   </div>
+                  {paymentMethod === "upi" && (
+                    <div className="pt-3 border-t mt-3">
+                      <p className="text-sm text-gray-500 flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-green-500" /> You'll
+                        complete UPI payment in the Razorpay window.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* COD */}
                 <div
                   onClick={() => setPaymentMethod("cod")}
-                  className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${
-                    paymentMethod === "cod"
-                      ? "border-red-600 bg-red-50"
-                      : "border-gray-200 hover:border-red-300"
-                  }`}
+                  className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${paymentMethod === "cod" ? "border-red-600 bg-red-50" : "border-gray-200 hover:border-red-300"}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-3 rounded-lg ${
-                          paymentMethod === "cod" ? "bg-red-600" : "bg-gray-100"
-                        }`}
+                        className={`p-3 rounded-lg ${paymentMethod === "cod" ? "bg-red-600" : "bg-gray-100"}`}
                       >
                         <Banknote
-                          className={`w-6 h-6 ${
-                            paymentMethod === "cod"
-                              ? "text-white"
-                              : "text-gray-600"
-                          }`}
+                          className={`w-6 h-6 ${paymentMethod === "cod" ? "text-white" : "text-gray-600"}`}
                         />
                       </div>
                       <div>
@@ -652,7 +652,7 @@ export default function PaymentCheckout() {
                           Cash on Delivery
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Pay when you receive
+                          Pay when you receive your order
                         </p>
                       </div>
                     </div>
@@ -666,7 +666,6 @@ export default function PaymentCheckout() {
               </div>
             </div>
 
-            {/* Error */}
             {orderError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
                 ⚠️ {orderError}
@@ -674,14 +673,12 @@ export default function PaymentCheckout() {
             )}
           </div>
 
-          {/* ── Right Column: Order Summary ──────────────────────── */}
+          {/* Right Column */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h2 className="text-xl font-bold text-gray-800 mb-4">
                 Order Summary
               </h2>
-
-              {/* Selected vendor badge */}
               {selectedVendor && (
                 <div className="mb-4 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex items-center gap-2">
                   <Store className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -690,8 +687,6 @@ export default function PaymentCheckout() {
                   </span>
                 </div>
               )}
-
-              {/* Cart items */}
               <div className="space-y-3 mb-4 max-h-52 overflow-y-auto pr-1">
                 {cartItems.map((item) => (
                   <div key={item._id} className="flex items-center gap-3">
@@ -716,8 +711,6 @@ export default function PaymentCheckout() {
                   </div>
                 ))}
               </div>
-
-              {/* Totals */}
               <div className="border-t pt-4 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal ({cartItems.length} items)</span>
@@ -732,8 +725,6 @@ export default function PaymentCheckout() {
                   <span className="text-red-600">₹{total}</span>
                 </div>
               </div>
-
-              {/* Place Order Button */}
               <button
                 onClick={handlePlaceOrder}
                 disabled={isProcessing}
@@ -742,18 +733,24 @@ export default function PaymentCheckout() {
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Placing Order...
+                    {paymentMethod === "cod"
+                      ? "Placing Order..."
+                      : "Opening Payment..."}
                   </>
                 ) : (
                   <>
                     <Lock className="w-5 h-5" />
-                    Place Order · ₹{total}
+                    {paymentMethod === "cod"
+                      ? `Place Order · ₹${total}`
+                      : `Pay ₹${total}`}
                   </>
                 )}
               </button>
-
               <p className="text-xs text-gray-400 text-center mt-3 flex items-center justify-center gap-1">
-                <Lock className="w-3 h-3" /> Secured & Encrypted Checkout
+                <Lock className="w-3 h-3" />
+                {paymentMethod === "cod"
+                  ? "Pay safely at your doorstep"
+                  : "Secured by Razorpay"}
               </p>
             </div>
           </div>

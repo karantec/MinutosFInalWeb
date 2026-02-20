@@ -110,7 +110,7 @@ export default function App() {
         <Route path="/subcategory" element={<CategoriesSub />} />
         <Route path="/product/:id" element={<ProductDetailScreen />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/payment" element={<PaymentCheckout />} />
+        {/* <Route path="/payment" element={<PaymentCheckout />} /> */}
         <Route path="/sell" element={<VendorRegistrationForm />} />
         <Route path="/nearByStore" element={<StoreSelector />} />
         {/* <Route path="/delievery" element={<ThankYouPage />} /> */}
