@@ -561,13 +561,13 @@ const Header = () => {
                           <FaRegUser className="w-4 h-4 text-gray-500" />
                           My Profile
                         </Link>
-                        <button
+                        {/* <button
                           onClick={handleLogout}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
                         >
                           <FaSignOutAlt className="w-4 h-4" />
                           Logout
-                        </button>
+                        </button> */}
                       </div>
                     )}
                   </div>
