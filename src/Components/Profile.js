@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-
 import { useSelector } from "react-redux";
-import { logout } from "./store/authSlice";
+import { logout, loginSuccess } from "./store/authSlice";
 import axios from "axios";
 import {
   Package,
@@ -9,13 +8,9 @@ import {
   HeadphonesIcon,
   User,
   LogOut,
-  Clock,
-  CheckCircle,
-  XCircle,
   Loader2,
   ChevronDown,
   ChevronUp,
-  Store,
   Plus,
   Trash2,
   Pencil,
@@ -23,6 +18,8 @@ import {
   Home,
   Briefcase,
   MoreHorizontal,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { useAppDispatch } from "./hooks/useAppDispatch";
 
@@ -85,15 +82,14 @@ function OrdersSection({ token }) {
     });
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex items-center justify-center py-16 text-gray-500">
         <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading orders...
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
         <p className="text-red-600 text-sm mb-3">{error}</p>
@@ -105,9 +101,8 @@ function OrdersSection({ token }) {
         </button>
       </div>
     );
-  }
 
-  if (orders.length === 0) {
+  if (orders.length === 0)
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Package className="w-14 h-14 text-gray-300 mb-4" />
@@ -119,7 +114,6 @@ function OrdersSection({ token }) {
         </p>
       </div>
     );
-  }
 
   return (
     <div>
@@ -246,31 +240,172 @@ function OrdersSection({ token }) {
   );
 }
 
-// ── Profile Details Section ───────────────────────────────────────
-function ProfileSection({ user }) {
-  const fields = [
-    { label: "First Name", value: user?.firstName || user?.name || "—" },
-    { label: "Last Name", value: user?.lastName || "—" },
-    { label: "Phone", value: user?.phone || user?.phoneNumber || "—" },
-    { label: "Email", value: user?.email || "—" },
-  ];
+// ── Profile Section ───────────────────────────────────────────────
+function ProfileSection({ user, token }) {
+  const dispatch = useAppDispatch();
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null); // { type: "success"|"error", msg }
+
+  const [form, setForm] = useState({ name: "", email: "" });
+
+  const startEditing = () => {
+    setForm({ name: user?.name || "", email: user?.email || "" });
+    setToast(null);
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setToast(null);
+  };
+
+  const showToast = (type, msg) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await axios.put(
+        `${API_BASE}/auth/update-profile`,
+        {
+          name: form.name.trim() || undefined,
+          email: form.email.trim() || undefined,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      if (res.data?.success) {
+        // Refresh both token + user in Redux & localStorage in one shot
+        dispatch(loginSuccess({ token: res.data.token, user: res.data.user }));
+        setEditing(false);
+        showToast("success", "Profile updated successfully!");
+      }
+    } catch (err) {
+      showToast(
+        "error",
+        err.response?.data?.message || "Failed to update. Please try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-4">Profile Details</h3>
-      <div className="space-y-3">
-        {fields.map(({ label, value }) => (
-          <div
-            key={label}
-            className="flex justify-between items-center border rounded-xl px-4 py-3"
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Profile Details</h3>
+
+        {!editing ? (
+          <button
+            onClick={startEditing}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
           >
-            <span className="text-sm text-gray-500 font-medium">{label}</span>
-            <span className="text-sm font-semibold text-gray-800">{value}</span>
+            <Pencil className="w-3.5 h-3.5" /> Edit Profile
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={cancelEditing}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <XCircle className="w-3.5 h-3.5" /> Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-60"
+            >
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-3.5 h-3.5" />
+              )}
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
           </div>
-        ))}
+        )}
       </div>
-      <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm">
-        Edit Profile
-      </button>
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div
+          className={`flex items-center gap-2 px-4 py-3 rounded-xl mb-4 text-sm font-medium border ${
+            toast.type === "success"
+              ? "bg-green-50 text-green-700 border-green-200"
+              : "bg-red-50 text-red-700 border-red-200"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle className="w-4 h-4 flex-shrink-0" />
+          ) : (
+            <XCircle className="w-4 h-4 flex-shrink-0" />
+          )}
+          {toast.msg}
+        </div>
+      )}
+
+      {/* ── Fields ── */}
+      <div className="space-y-3">
+        {/* Name */}
+        <div className="flex justify-between items-center border rounded-xl px-4 py-3">
+          <span className="text-sm text-gray-500 font-medium">Full Name</span>
+          {editing ? (
+            <input
+              type="text"
+              value={form.name}
+              placeholder="Your full name"
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              className="text-sm font-semibold text-gray-800 text-right border-b border-red-300 focus:outline-none bg-transparent w-48"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-gray-800">
+              {user?.name || "—"}
+            </span>
+          )}
+        </div>
+
+        {/* Phone — never editable (it's the login identity) */}
+        <div className="flex justify-between items-center border rounded-xl px-4 py-3">
+          <span className="text-sm text-gray-500 font-medium">Phone</span>
+          <span className="text-sm font-semibold text-gray-800">
+            {user?.phoneNumber || user?.phone || "—"}
+          </span>
+        </div>
+
+        {/* Email */}
+        <div className="flex justify-between items-center border rounded-xl px-4 py-3">
+          <span className="text-sm text-gray-500 font-medium">Email</span>
+          {editing ? (
+            <input
+              type="email"
+              value={form.email}
+              placeholder="you@example.com"
+              onChange={(e) =>
+                setForm((f) => ({ ...f, email: e.target.value }))
+              }
+              className="text-sm font-semibold text-gray-800 text-right border-b border-red-300 focus:outline-none bg-transparent w-48"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-gray-800">
+              {user?.email || "—"}
+            </span>
+          )}
+        </div>
+
+        {/* Role — always read-only */}
+        {/* <div className="flex justify-between items-center border rounded-xl px-4 py-3">
+          <span className="text-sm text-gray-500 font-medium">Role</span>
+          <span className="text-sm font-semibold text-gray-800">
+            {user?.role || "USER"}
+          </span>
+        </div> */}
+      </div>
     </div>
   );
 }
@@ -288,7 +423,6 @@ const LABEL_COLORS = {
   Other: "bg-gray-100 text-gray-600",
 };
 
-// ── Empty form template ───────────────────────────────────────────
 const EMPTY_FORM = {
   label: "Home",
   street: "",
@@ -298,20 +432,19 @@ const EMPTY_FORM = {
   phone: "",
 };
 
-// ── Addresses Section (API-connected) ────────────────────────────
+// ── Addresses Section ─────────────────────────────────────────────
 function AddressesSection({ token }) {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null); // address _id being edited
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [formError, setFormError] = useState("");
 
-  // ── Fetch ─────────────────────────────────────────────────────
   useEffect(() => {
     fetchAddresses();
   }, []);
@@ -320,7 +453,7 @@ function AddressesSection({ token }) {
     try {
       setLoading(true);
       setError("");
-      const res = await axios.get(`${API_BASE}/user/addresses`, {
+      const res = await axios.get(`${API_BASE}/auth/addresses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAddresses(res.data?.addresses || []);
@@ -332,7 +465,6 @@ function AddressesSection({ token }) {
     }
   };
 
-  // ── Open form for new address ─────────────────────────────────
   const openAddForm = () => {
     setEditingId(null);
     setFormData(EMPTY_FORM);
@@ -340,7 +472,6 @@ function AddressesSection({ token }) {
     setShowForm(true);
   };
 
-  // ── Open form for editing ─────────────────────────────────────
   const openEditForm = (addr) => {
     setEditingId(addr._id);
     setFormData({
@@ -362,7 +493,6 @@ function AddressesSection({ token }) {
     setFormError("");
   };
 
-  // ── Save (create or update) ───────────────────────────────────
   const handleSubmit = async () => {
     setFormError("");
     if (
@@ -374,29 +504,24 @@ function AddressesSection({ token }) {
       setFormError("Please fill in all required fields.");
       return;
     }
-
     setSubmitting(true);
     try {
       if (editingId) {
-        // PUT /api/user/addresses/:id
         const res = await axios.put(
-          `${API_BASE}/user/addresses/${editingId}`,
+          `${API_BASE}/auth/addresses/${editingId}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } },
         );
-        if (res.data?.success) {
+        if (res.data?.success)
           setAddresses((prev) =>
             prev.map((a) => (a._id === editingId ? res.data.address : a)),
           );
-        }
       } else {
-        // POST /api/user/addresses
-        const res = await axios.post(`${API_BASE}/user/addresses`, formData, {
+        const res = await axios.post(`${API_BASE}/auth/addresses`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.data?.success) {
+        if (res.data?.success)
           setAddresses((prev) => [...prev, res.data.address]);
-        }
       }
       cancelForm();
     } catch (err) {
@@ -409,11 +534,10 @@ function AddressesSection({ token }) {
     }
   };
 
-  // ── Delete ────────────────────────────────────────────────────
   const handleDelete = async (addressId) => {
     setDeletingId(addressId);
     try {
-      await axios.delete(`${API_BASE}/user/addresses/${addressId}`, {
+      await axios.delete(`${API_BASE}/auth/addresses/${addressId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAddresses((prev) => prev.filter((a) => a._id !== addressId));
@@ -424,19 +548,17 @@ function AddressesSection({ token }) {
     }
   };
 
-  // ── Set default ───────────────────────────────────────────────
   const handleSetDefault = async (addressId) => {
     setSettingDefaultId(addressId);
     try {
       const res = await axios.patch(
-        `${API_BASE}/user/addresses/${addressId}/default`,
+        `${API_BASE}/auth/addresses/${addressId}/default`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.data?.addresses) {
         setAddresses(res.data.addresses);
       } else {
-        // Optimistic fallback
         setAddresses((prev) =>
           prev.map((a) => ({ ...a, isDefault: a._id === addressId })),
         );
@@ -448,7 +570,6 @@ function AddressesSection({ token }) {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
@@ -470,7 +591,6 @@ function AddressesSection({ token }) {
         )}
       </div>
 
-      {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm mb-4 flex items-center justify-between">
           {error}
@@ -480,7 +600,6 @@ function AddressesSection({ token }) {
         </div>
       )}
 
-      {/* Loading */}
       {loading ? (
         <div className="flex items-center justify-center py-12 text-gray-400">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading addresses...
@@ -507,7 +626,6 @@ function AddressesSection({ token }) {
               className={`border-2 rounded-xl p-4 transition-colors ${addr.isDefault ? "border-red-300 bg-red-50" : "border-gray-200 bg-white"}`}
             >
               <div className="flex items-start justify-between gap-3">
-                {/* Left: info */}
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div
                     className={`p-2 rounded-lg flex-shrink-0 ${LABEL_COLORS[addr.label] || "bg-gray-100 text-gray-600"}`}
@@ -541,8 +659,6 @@ function AddressesSection({ token }) {
                     </p>
                   </div>
                 </div>
-
-                {/* Right: actions */}
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                   <div className="flex gap-2">
                     <button
@@ -586,14 +702,11 @@ function AddressesSection({ token }) {
         </div>
       )}
 
-      {/* ── Add / Edit Form ─────────────────────────────────────── */}
       {showForm && (
         <div className="mt-4 border-2 border-red-200 rounded-xl p-5 bg-red-50">
           <h4 className="font-semibold text-gray-800 mb-4">
             {editingId ? "Edit Address" : "Add New Address"}
           </h4>
-
-          {/* Label selector */}
           <div className="mb-4">
             <label className="block text-xs font-semibold text-gray-600 mb-2">
               Label
@@ -603,18 +716,13 @@ function AddressesSection({ token }) {
                 <button
                   key={lbl}
                   onClick={() => setFormData({ ...formData, label: lbl })}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                    formData.label === lbl
-                      ? "bg-red-600 text-white border-red-600"
-                      : "bg-white text-gray-600 border-gray-300 hover:border-red-400"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${formData.label === lbl ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-600 border-gray-300 hover:border-red-400"}`}
                 >
                   <LabelIcon label={lbl} /> {lbl}
                 </button>
               ))}
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-600 mb-1">
@@ -687,13 +795,11 @@ function AddressesSection({ token }) {
               />
             </div>
           </div>
-
           {formError && (
             <p className="mt-3 text-sm text-red-600 bg-red-100 px-3 py-2 rounded-lg">
               ⚠️ {formError}
             </p>
           )}
-
           <div className="flex gap-3 mt-4">
             <button
               onClick={handleSubmit}
@@ -740,7 +846,6 @@ function SupportSection() {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border">
       <h3 className="text-lg font-semibold mb-4">Customer Support</h3>
-
       <div className="space-y-4">
         {tickets.map((t) => (
           <div key={t.id} className="border rounded-xl p-4">
@@ -754,14 +859,12 @@ function SupportSection() {
           </div>
         ))}
       </div>
-
       <button
         onClick={() => setShowForm(true)}
         className="mt-6 w-full bg-red-500 text-white py-3 rounded-lg"
       >
         + Raise New Ticket
       </button>
-
       {showForm && (
         <div className="mt-6 border p-4 rounded-xl bg-gray-50 space-y-3">
           <input
@@ -828,7 +931,7 @@ export default function Profile() {
       case "Orders":
         return <OrdersSection token={token} />;
       case "Profile":
-        return <ProfileSection user={user} />;
+        return <ProfileSection user={user} token={token} />;
       case "Addresses":
         return <AddressesSection token={token} />;
       case "Customer Support":
@@ -850,7 +953,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6">
-      {/* ── Sidebar ──────────────────────────────────────────────── */}
+      {/* ── Sidebar ── */}
       <div className="w-full md:w-72 flex-shrink-0">
         <div className="bg-white shadow rounded-2xl p-5 space-y-5">
           <div className="flex items-center gap-3">
@@ -881,8 +984,7 @@ export default function Profile() {
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                {label}
+                <Icon className="w-4 h-4 flex-shrink-0" /> {label}
               </button>
             ))}
           </nav>
@@ -896,7 +998,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ── Main Content ─────────────────────────────────────────── */}
+      {/* ── Main Content ── */}
       <div className="flex-1 bg-white shadow rounded-2xl p-6 min-h-[400px]">
         {renderSection()}
       </div>
